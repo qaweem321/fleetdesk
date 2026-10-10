@@ -1,12 +1,15 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { APIError } from "better-auth/api";
+import { APIError, createAuthMiddleware, getSessionFromCtx } from "better-auth/api";
 import { nextCookies } from "better-auth/next-js";
 import { db } from "@/db";
 import * as schema from "@/db/schema";
 import { accountDeletionBlockers } from "@/lib/account";
-import { isDemoMode } from "@/lib/demo";
+import { DEMO_DISABLED_MESSAGE, isDemoLogin, isDemoMode } from "@/lib/demo";
 import { buttonEmailHtml, sendEmail } from "@/lib/email";
+
+// Account changes that would lock other demo visitors out of the shared sample logins.
+const PROTECTED_DEMO_PATHS = ["/change-password", "/delete-user", "/change-email", "/update-user"];
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, { provider: "pg", schema, usePlural: true }),
@@ -74,6 +77,18 @@ export const auth = betterAuth({
         console.error(error);
       }
     },
+  },
+  hooks: {
+    // In the live demo, the shared sample logins can't be locked or deleted by a visitor.
+    before: createAuthMiddleware(async (ctx) => {
+      if (!PROTECTED_DEMO_PATHS.includes(ctx.path)) {
+        return;
+      }
+      const session = await getSessionFromCtx(ctx);
+      if (session && isDemoLogin(session.user.email)) {
+        throw new APIError("FORBIDDEN", { message: DEMO_DISABLED_MESSAGE });
+      }
+    }),
   },
   // Limits login attempts and email sending per IP (on in production only).
   // Stored in the database because serverless instances don't share memory.

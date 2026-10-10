@@ -1,4 +1,4 @@
-# Echoboard production image. Used by docker-compose.yml; works on any host that runs Docker.
+# Fleetdesk production image. Used by docker-compose.yml; works on any host that runs Docker.
 
 # 1. Install dependencies (without running packages' install scripts).
 FROM node:24-alpine AS deps
@@ -33,6 +33,8 @@ RUN addgroup -S app && adduser -S app -G app
 COPY --from=builder /app/public ./public
 COPY --from=builder --chown=app:app /app/.next/standalone ./
 COPY --from=builder --chown=app:app /app/.next/static ./.next/static
+# Uploaded photos when STORAGE_DRIVER is "local" (docker-compose.yml keeps them in a volume).
+RUN mkdir -p /app/uploads && chown app:app /app/uploads
 USER app
 EXPOSE 3000
 CMD ["node", "server.js"]

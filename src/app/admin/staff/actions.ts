@@ -6,7 +6,7 @@ import { revalidatePath } from "next/cache";
 import { absoluteUrl } from "@/config/site";
 import { db } from "@/db";
 import { invitations, users } from "@/db/schema";
-import { isDemoMode } from "@/lib/demo";
+import { DEMO_DISABLED_MESSAGE, isDemoLogin, isDemoMode } from "@/lib/demo";
 import { buttonEmailHtml, sendEmail } from "@/lib/email";
 import { isValidEmail } from "@/lib/email-address";
 import { INVITE_DAYS } from "@/lib/invitations";
@@ -24,11 +24,14 @@ async function findOtherStaff(userId: string, myId: string) {
     throw new Error("You can't change your own access.");
   }
   const [target] = await db
-    .select({ id: users.id, role: users.role })
+    .select({ id: users.id, role: users.role, email: users.email })
     .from(users)
     .where(and(eq(users.id, userId), ne(users.role, "customer")));
   if (!target) {
     throw new Error("Staff member not found.");
+  }
+  if (isDemoLogin(target.email)) {
+    throw new Error(DEMO_DISABLED_MESSAGE);
   }
   return target;
 }

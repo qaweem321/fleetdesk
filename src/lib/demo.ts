@@ -19,3 +19,12 @@ export const demoLogins = {
 } as const;
 
 export const DEMO_DISABLED_MESSAGE = "This is turned off in the live demo.";
+
+// The sample logins are shared by every demo visitor, so nobody may change their password,
+// email or role, or delete them. Everything else can be tried (the demo is reset regularly).
+export function isDemoLogin(email: string, env: Env = process.env) {
+  return (
+    isDemoMode(env) &&
+    Object.values(demoLogins).some((login) => login.email === email.toLowerCase())
+  );
+}

@@ -1,20 +1,20 @@
-# Run Echoboard with its own Postgres database:
-#   cp .env.example .env   (fill it in; DATABASE_URL is set below)
+# Run Fleetdesk with its own Postgres database:
+#   cp .env.example .env   (fill it in; DATABASE_URL and the storage settings are set below)
 #   docker compose up -d --build
-# The app listens on port 3000. Put a reverse proxy with HTTPS (Caddy, Nginx, Traefik) in front.
+# The app listens on port 3000. Put a reverse proxy with HTTPS in front (deploy/Caddyfile).
 
 services:
   db:
     image: postgres:17-alpine
     restart: unless-stopped
     environment:
-      POSTGRES_USER: echoboard
+      POSTGRES_USER: fleetdesk
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change-this-password}
-      POSTGRES_DB: echoboard
+      POSTGRES_DB: fleetdesk
     volumes:
       - db-data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U echoboard -d echoboard"]
+      test: ["CMD-SHELL", "pg_isready -U fleetdesk -d fleetdesk"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -25,7 +25,7 @@ services:
       context: .
       target: migrator
     environment:
-      DATABASE_URL: postgresql://echoboard:${POSTGRES_PASSWORD:-change-this-password}@db:5432/echoboard
+      DATABASE_URL: postgresql://fleetdesk:${POSTGRES_PASSWORD:-change-this-password}@db:5432/fleetdesk
     depends_on:
       db:
         condition: service_healthy
@@ -37,12 +37,31 @@ services:
     restart: unless-stopped
     env_file: .env
     environment:
-      DATABASE_URL: postgresql://echoboard:${POSTGRES_PASSWORD:-change-this-password}@db:5432/echoboard
+      DATABASE_URL: postgresql://fleetdesk:${POSTGRES_PASSWORD:-change-this-password}@db:5432/fleetdesk
+      # Photos are kept on disk, in the "uploads" volume below.
+      STORAGE_DRIVER: local
+      STORAGE_LOCAL_DIR: /app/uploads
+    volumes:
+      - uploads:/app/uploads
     ports:
       - "3000:3000"
     depends_on:
       migrate:
         condition: service_completed_successfully
 
+  # Runs the daily job (reminder emails, staff summary, cleanup) every hour. Each reminder is
+  # only ever sent once, so running it often is safe.
+  cron:
+    image: alpine:3.22
+    restart: unless-stopped
+    env_file: .env
+    command: >
+      sh -c 'while true; do sleep 3600;
+      wget -q -O /dev/null --header="Authorization: Bearer $$CRON_SECRET" http://app:3000/api/cron/daily;
+      done'
+    depends_on:
+      - app
+
 volumes:
   db-data:
+  uploads:

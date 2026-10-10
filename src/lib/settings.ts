@@ -20,7 +20,9 @@ const loadSettings = unstable_cache(
   // The column names are part of the key: after a migration adds a setting, the cached row
   // (without it) is never used again.
   [SETTINGS_TAG, Object.keys(columns).join(",")],
-  { tags: [SETTINGS_TAG] },
+  // Saving Settings refreshes it at once; changes made outside the app (the demo reset, the
+  // seed script, a database edit) show within a minute.
+  { tags: [SETTINGS_TAG], revalidate: 60 },
 );
 
 export type BusinessSettings = NonNullable<Awaited<ReturnType<typeof loadSettings>>>;
