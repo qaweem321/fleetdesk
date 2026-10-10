@@ -207,6 +207,21 @@ export default async function PricingPage() {
               />
             </Field>
           </div>
+          <Field
+            label="Minimum driver age"
+            htmlFor="minDriverAge"
+            hint="Checked on the pickup date when booking and at the counter."
+          >
+            <Input
+              id="minDriverAge"
+              name="minDriverAge"
+              type="number"
+              min={16}
+              max={99}
+              defaultValue={settings.minDriverAge}
+              className="sm:max-w-40"
+            />
+          </Field>
           <ActionMessage />
           <SubmitButton pendingText="Saving...">Save rules</SubmitButton>
         </ActionForm>

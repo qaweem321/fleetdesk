@@ -6,6 +6,8 @@ import { cancelBooking } from "@/lib/bookings/cancel";
 import { createBooking } from "@/lib/bookings/create";
 import { parseBookingDetails } from "@/lib/bookings/input";
 import { getBooking } from "@/lib/bookings/queries";
+import { getDriverProfile, saveDateOfBirth } from "@/lib/drivers/profile";
+import { driverAgeProblem } from "@/lib/drivers/rules";
 import { formReader } from "@/lib/form-input";
 import { sendBookingConfirmedEmails } from "@/lib/notifications/booking-emails";
 import { startCheckout } from "@/lib/payments/checkout";
@@ -16,6 +18,7 @@ import { parseQuoteRequest } from "@/lib/pricing/request";
 import { rateLimit } from "@/lib/rate-limit";
 import { requireUser } from "@/lib/session";
 import { requireSettings } from "@/lib/settings";
+import { localDateKey, parseDateKey } from "@/lib/time-zone";
 
 export type QuoteState = {
   quote?: Quote;
@@ -57,6 +60,18 @@ export async function bookCar(_previous: BookState, formData: FormData): Promise
   if (formData.get("acceptTerms") !== "on") {
     return { error: "Please accept the rental terms." };
   }
+  // The driver's age on the pickup date, from the form or from their saved driver details.
+  const typedBirthDate = parseDateKey(String(formData.get("dateOfBirth") ?? ""));
+  const profile = await getDriverProfile(user.id);
+  const dateOfBirth = typedBirthDate ?? profile?.dateOfBirth ?? null;
+  const ageProblem = driverAgeProblem(
+    dateOfBirth,
+    localDateKey(parsed.request.start, settings.timeZone),
+    settings.minDriverAge,
+  );
+  if (ageProblem) {
+    return { error: ageProblem };
+  }
   const methods = paymentMethodsFor(settings.paymentOptions);
   const chosen = String(formData.get("paymentMethod") ?? methods[0]);
   const paymentMethod = methods.find((method) => method === chosen);
@@ -78,6 +93,9 @@ export async function bookCar(_previous: BookState, formData: FormData): Promise
   });
   if ("error" in result) {
     return result;
+  }
+  if (typedBirthDate && typedBirthDate !== profile?.dateOfBirth) {
+    await saveDateOfBirth(user.id, typedBirthDate);
   }
   if (paymentMethod === "online") {
     // To Stripe's payment page. The confirmation email goes out once the payment is in.

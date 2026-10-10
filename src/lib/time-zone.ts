@@ -76,3 +76,14 @@ export function toLocalInput(date: Date, timeZone: string) {
 export function localDateKey(date: Date, timeZone: string) {
   return toLocalInput(date, timeZone).slice(0, 10);
 }
+
+const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+
+// "2026-10-11" from an <input type="date">, only if it's a real calendar date.
+export function parseDateKey(text: string): string | null {
+  if (!DATE_PATTERN.test(text)) {
+    return null;
+  }
+  const date = new Date(`${text}T00:00:00Z`);
+  return !Number.isNaN(date.getTime()) && date.toISOString().startsWith(text) ? text : null;
+}

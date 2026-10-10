@@ -5,10 +5,12 @@ import { after } from "next/server";
 import { DeleteForm } from "@/components/admin/delete-form";
 import { BookingStatusBadge } from "@/components/booking-status-badge";
 import { BookingSummary } from "@/components/booking-summary";
+import { ButtonLink } from "@/components/ui/button";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { getBooking } from "@/lib/bookings/queries";
 import { cancellationDeadline, customerCanCancel } from "@/lib/bookings/status";
 import { paymentSentence } from "@/lib/bookings/wording";
+import { getDriverProfile } from "@/lib/drivers/profile";
 import { formatDateTime, formatTime } from "@/lib/format";
 import { formatMoney } from "@/lib/money";
 import { sendBookingConfirmedEmails } from "@/lib/notifications/booking-emails";
@@ -65,7 +67,14 @@ export default async function MyBookingPage({ params, searchParams }: Props) {
   if (!booking) {
     notFound();
   }
-  const ledger = await bookingLedger(booking.id, booking.total);
+  const [ledger, driver] = await Promise.all([
+    bookingLedger(booking.id, booking.total),
+    getDriverProfile(user.id),
+  ]);
+  const needsLicense =
+    (booking.status === "confirmed" || booking.status === "pending_payment") &&
+    driver?.status !== "approved" &&
+    driver?.status !== "pending";
   const justBooked =
     (firstParam(query.booked) === "1" || Boolean(sessionId)) && booking.status === "confirmed";
   const canCancel = customerCanCancel(booking, settings.freeCancellationHours);
@@ -109,6 +118,18 @@ export default async function MyBookingPage({ params, searchParams }: Props) {
               Pay {formatMoney(booking.total, booking.currency)} now
             </SubmitButton>
           </form>
+        </div>
+      )}
+
+      {needsLicense && (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border p-4">
+          <p className="text-sm">
+            <span className="font-semibold">Save time at pickup:</span> send your driver&apos;s
+            license now.
+          </p>
+          <ButtonLink href="/account/driver" variant="outline">
+            Add driver details
+          </ButtonLink>
         </div>
       )}
 

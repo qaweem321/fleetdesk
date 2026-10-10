@@ -9,6 +9,7 @@ export const metadata: Metadata = { robots: { index: false } };
 
 const tabs = [
   { label: "My bookings", href: "/account" },
+  { label: "Driver details", href: "/account/driver" },
   { label: "Account", href: "/account/settings" },
 ];
 

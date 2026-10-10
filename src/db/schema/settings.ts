@@ -1,6 +1,15 @@
 // The rental business's settings. There is exactly one row (id 1), created by the setup wizard.
 import { sql } from "drizzle-orm";
-import { check, integer, pgEnum, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import {
+  boolean,
+  check,
+  integer,
+  pgEnum,
+  pgTable,
+  text,
+  timestamp,
+  uuid,
+} from "drizzle-orm/pg-core";
 import { files } from "./files";
 
 // How customers can pay. Online payment needs Stripe (STRIPE_SECRET_KEY).
@@ -33,6 +42,11 @@ export const businessSettings = pgTable(
     // ...and last at most this many days.
     maxRentalDays: integer("max_rental_days").notNull().default(30),
     paymentOptions: paymentOptionsEnum("payment_options").notNull().default("pay_at_pickup"),
+    // Drivers must be at least this old on the pickup date.
+    minDriverAge: integer("min_driver_age").notNull().default(21),
+    // Offer customers an automatic ID check with Stripe Identity (a selfie matched to their
+    // license). Needs Stripe; costs a small fee per check.
+    stripeIdentityEnabled: boolean("stripe_identity_enabled").notNull().default(false),
     // Cleaning time after each return before the car can be rented again.
     turnaroundMinutes: integer("turnaround_minutes").notNull().default(60),
     // Customers can cancel online until this many hours before pickup.

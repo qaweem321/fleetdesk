@@ -72,7 +72,11 @@ export async function updatePaymentOptions(
   }
   await db
     .update(businessSettings)
-    .set({ paymentOptions, updatedAt: new Date() })
+    .set({
+      paymentOptions,
+      stripeIdentityEnabled: formData.get("stripeIdentityEnabled") === "on",
+      updatedAt: new Date(),
+    })
     .where(eq(businessSettings.id, 1));
   settingsChanged();
   return { success: "Payment options saved." };

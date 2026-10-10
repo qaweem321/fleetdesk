@@ -4,7 +4,7 @@ import Link from "next/link";
 import { PublicPage } from "@/components/site/public-page";
 import { ButtonLink } from "@/components/ui/button";
 import { db } from "@/db";
-import { users } from "@/db/schema";
+import { driverProfiles, users } from "@/db/schema";
 import { searchParamsOf } from "@/lib/bookings/search";
 import { carModelName } from "@/lib/fleet/labels";
 import { publicLocations } from "@/lib/fleet/queries";
@@ -43,7 +43,11 @@ export default async function BookPage({
   const { request } = parsed;
   const [built, [profile]] = await Promise.all([
     buildQuote(request, settings, { forCustomer: true }),
-    db.select({ phone: users.phone }).from(users).where(eq(users.id, user.id)),
+    db
+      .select({ phone: users.phone, dateOfBirth: driverProfiles.dateOfBirth })
+      .from(users)
+      .leftJoin(driverProfiles, eq(driverProfiles.userId, users.id))
+      .where(eq(users.id, user.id)),
   ]);
   if ("error" in built) {
     return <CantContinue message={built.error} />;
@@ -96,6 +100,7 @@ export default async function BookPage({
           taxRate={settings.taxRate}
           phone={profile?.phone ?? ""}
           paymentMethods={paymentMethodsFor(settings.paymentOptions)}
+          minDriverAge={profile?.dateOfBirth ? null : settings.minDriverAge}
         />
       </div>
     </PublicPage>

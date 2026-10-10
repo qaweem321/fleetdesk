@@ -7,6 +7,7 @@ type AdminNavItem = NavItem & { permission?: Permission };
 const adminNav: AdminNavItem[] = [
   { label: "Overview", href: "/admin" },
   { label: "Bookings", href: "/admin/bookings" },
+  { label: "Customers", href: "/admin/customers" },
   { label: "Cars", href: "/admin/cars" },
   { label: "Vehicles", href: "/admin/vehicles" },
   { label: "Locations", href: "/admin/locations" },

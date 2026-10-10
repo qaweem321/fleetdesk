@@ -2,6 +2,7 @@ import { absoluteUrl } from "@/config/site";
 import type { BookingDetails } from "@/lib/bookings/queries";
 import { cancellationNote } from "@/lib/bookings/status";
 import { paymentSentence } from "@/lib/bookings/wording";
+import { getDriverProfile } from "@/lib/drivers/profile";
 import { detailsEmailHtml, detailsEmailText, type Email, sendEmails } from "@/lib/email";
 import { formatDateTime } from "@/lib/format";
 import { formatMoney } from "@/lib/money";
@@ -61,7 +62,15 @@ export async function sendBookingConfirmedEmails(
   booking: BookingDetails,
   settings: BusinessSettings,
 ) {
-  const [rows, money] = await Promise.all([bookingRows(booking, settings), moneySentence(booking)]);
+  const [rows, money, driver] = await Promise.all([
+    bookingRows(booking, settings),
+    moneySentence(booking),
+    booking.customerId ? getDriverProfile(booking.customerId) : null,
+  ]);
+  const license =
+    driver?.status === "approved" || driver?.status === "pending"
+      ? ""
+      : " Save time at pickup: send your driver's license in your account (Driver details).";
   const deposit =
     booking.depositAmount > 0
       ? ` A deposit of ${formatMoney(booking.depositAmount, booking.currency)} is held on your card at pickup and released after the return.`
@@ -75,7 +84,7 @@ export async function sendBookingConfirmedEmails(
       `Booking confirmed: ${booking.make} ${booking.model} (${booking.reference})`,
       {
         heading: "Your booking is confirmed",
-        message: `Hi ${booking.customerName}, thank you for booking with ${settings.businessName}. ${money} Please bring your driver's license and a payment card in your name.${deposit}`,
+        message: `Hi ${booking.customerName}, thank you for booking with ${settings.businessName}. ${money} Please bring your driver's license and a payment card in your name.${deposit}${license}`,
         rows,
         button: { text: "View your booking", url: absoluteUrl(`/account/bookings/${booking.id}`) },
         footer: cancellation,

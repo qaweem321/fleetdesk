@@ -39,6 +39,8 @@ type Props = {
   phone: string;
   // The ways to pay, the first being the default (see paymentMethodsFor).
   paymentMethods: PaymentMethod[];
+  // Set when we don't know the driver's date of birth yet: the form asks for it.
+  minDriverAge: number | null;
 };
 
 const paymentLabels: Record<PaymentMethod, { title: string; text: string }> = {
@@ -60,6 +62,7 @@ export function BookingForm({
   taxRate,
   phone,
   paymentMethods,
+  minDriverAge,
 }: Props) {
   const formRef = useRef<HTMLFormElement>(null);
   const [priced, setPriced] = useState<QuoteState>({ quote: initialQuote });
@@ -157,6 +160,21 @@ export function BookingForm({
               className="sm:max-w-64"
             />
           </Field>
+          {minDriverAge && (
+            <Field
+              label="Driver's date of birth"
+              htmlFor="dateOfBirth"
+              hint={`The driver must be at least ${minDriverAge} on the pickup date.`}
+            >
+              <Input
+                id="dateOfBirth"
+                name="dateOfBirth"
+                type="date"
+                required
+                className="sm:max-w-64"
+              />
+            </Field>
+          )}
           <Field label="Note for us" htmlFor="note" hint="Optional, e.g. your flight number.">
             <Textarea id="note" name="note" maxLength={500} className="min-h-16" />
           </Field>

@@ -109,6 +109,23 @@ export default async function SettingsPage() {
                 <option value="both">Choose: online or at pickup</option>
               </Select>
             </Field>
+            <label className="flex items-start gap-2 text-sm">
+              <input
+                type="checkbox"
+                name="stripeIdentityEnabled"
+                defaultChecked={settings.stripeIdentityEnabled}
+                className="mt-0.5 h-4 w-4 accent-[var(--primary)]"
+              />
+              <span>
+                <span className="block font-medium">
+                  Offer automatic ID checks (Stripe Identity)
+                </span>
+                <span className="block text-muted-foreground">
+                  Customers verify their license with a selfie; Stripe charges a small fee per
+                  check. Turn it on in your Stripe dashboard first.
+                </span>
+              </span>
+            </label>
             <ActionMessage />
             <SubmitButton pendingText="Saving...">Save payment options</SubmitButton>
           </ActionForm>

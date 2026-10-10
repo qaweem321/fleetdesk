@@ -2,7 +2,6 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
   parseCouponInput,
-  parseDateKey,
   parseExtraInput,
   parseRulesInput,
   parseSeasonInput,
@@ -16,12 +15,6 @@ function expectError(result: { error: string } | { values: unknown }, message: R
   assert.ok("error" in result, String(message));
   assert.match(result.error, message);
 }
-
-test("dates must be real calendar dates", () => {
-  assert.equal(parseDateKey("2026-02-28"), "2026-02-28");
-  assert.equal(parseDateKey("2026-02-30"), null);
-  assert.equal(parseDateKey("28/02/2026"), null);
-});
 
 test("reads a season with a price change up or down", () => {
   const summer = {
@@ -125,6 +118,7 @@ test("reads the booking rules", () => {
     maxRentalDays: "30",
     turnaroundMinutes: "60",
     freeCancellationHours: "24",
+    minDriverAge: "21",
   };
   assert.deepEqual(parseRulesInput(reader(rules)), {
     values: {
@@ -135,6 +129,7 @@ test("reads the booking rules", () => {
       maxRentalDays: 30,
       turnaroundMinutes: 60,
       freeCancellationHours: 24,
+      minDriverAge: 21,
     },
   });
   expectError(parseRulesInput(reader({ ...rules, maxRentalDays: "0" })), /longest rental/);

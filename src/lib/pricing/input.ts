@@ -1,20 +1,10 @@
 import { optionalText, parseWholeNumber, type Read } from "@/lib/form-input";
 import { parseMoney } from "@/lib/money";
+import { parseDateKey } from "@/lib/time-zone";
 import { normalizeCouponCode } from "./coupon";
 
 // Checks for the pricing forms (pure functions, shared by the actions and the tests).
 type Result<T> = { values: T } | { error: string };
-
-const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
-
-// "2026-10-11" from an <input type="date">, only if it's a real calendar date.
-export function parseDateKey(text: string): string | null {
-  if (!DATE_PATTERN.test(text)) {
-    return null;
-  }
-  const date = new Date(`${text}T00:00:00Z`);
-  return !Number.isNaN(date.getTime()) && date.toISOString().startsWith(text) ? text : null;
-}
 
 // A whole number that may be negative ("-15", "+20", "20").
 function parseSignedWholeNumber(text: string, min: number, max: number) {
@@ -154,6 +144,7 @@ export type RulesInput = {
   maxRentalDays: number;
   turnaroundMinutes: number;
   freeCancellationHours: number;
+  minDriverAge: number;
 };
 
 // "8.25" -> 825 (hundredths of a percent). Null for anything that isn't 0-100 with at most two
@@ -180,6 +171,7 @@ export function parseRulesInput(read: Read): Result<RulesInput> {
   const maxRentalDays = parseWholeNumber(read("maxRentalDays"), 1, 365);
   const turnaroundMinutes = parseWholeNumber(read("turnaroundMinutes"), 0, 1440);
   const freeCancellationHours = parseWholeNumber(read("freeCancellationHours"), 0, 720);
+  const minDriverAge = parseWholeNumber(read("minDriverAge"), 16, 99);
   if (taxRate === null) {
     return { error: "Please enter the tax rate in %, like 8.25 (0 for no tax)." };
   }
@@ -201,6 +193,9 @@ export function parseRulesInput(read: Read): Result<RulesInput> {
   if (freeCancellationHours === null) {
     return { error: "Free cancellation must be between 0 and 720 hours before pickup." };
   }
+  if (minDriverAge === null) {
+    return { error: "The minimum driver age must be between 16 and 99." };
+  }
   return {
     values: {
       taxRate,
@@ -210,6 +205,7 @@ export function parseRulesInput(read: Read): Result<RulesInput> {
       maxRentalDays,
       turnaroundMinutes,
       freeCancellationHours,
+      minDriverAge,
     },
   };
 }

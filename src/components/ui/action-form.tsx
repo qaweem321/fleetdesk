@@ -47,7 +47,9 @@ export function ActionForm({ action, resetOnSuccess = false, children, ...props 
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const formData = new FormData(event.currentTarget);
+    // Include the button that was pressed (forms with "Accept" and "Ask to fix" buttons).
+    const submitter = (event.nativeEvent as SubmitEvent).submitter;
+    const formData = new FormData(event.currentTarget, submitter);
     startTransition(() => dispatch(formData));
   }
 

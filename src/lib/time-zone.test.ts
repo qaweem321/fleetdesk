@@ -1,6 +1,12 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { fromLocalInput, isValidTimeZone, localDateKey, toLocalInput } from "./time-zone";
+import {
+  fromLocalInput,
+  isValidTimeZone,
+  localDateKey,
+  parseDateKey,
+  toLocalInput,
+} from "./time-zone";
 
 test("reads a wall-clock time at the business as the right UTC moment", () => {
   assert.equal(
@@ -60,4 +66,10 @@ test("round-trips through the input format", () => {
 test("knows real time zones", () => {
   assert.equal(isValidTimeZone("Europe/Berlin"), true);
   assert.equal(isValidTimeZone("Mars/Olympus"), false);
+});
+
+test("dates must be real calendar dates", () => {
+  assert.equal(parseDateKey("2026-02-28"), "2026-02-28");
+  assert.equal(parseDateKey("2026-02-30"), null);
+  assert.equal(parseDateKey("28/02/2026"), null);
 });

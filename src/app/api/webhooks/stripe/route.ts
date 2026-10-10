@@ -1,14 +1,17 @@
 import { after } from "next/server";
 import type Stripe from "stripe";
 import { getBooking } from "@/lib/bookings/queries";
+import { identityNeedsInput, identityVerified } from "@/lib/drivers/identity";
 import { sendBookingConfirmedEmails } from "@/lib/notifications/booking-emails";
 import { completeCheckout, expireCheckout } from "@/lib/payments/checkout";
 import { getStripe } from "@/lib/payments/stripe";
 import { getSettings } from "@/lib/settings";
 
-// Stripe tells the app here when a customer has paid, or left the payment page. Add this URL in
-// the Stripe dashboard (Developers > Webhooks) with the events checkout.session.completed and
-// checkout.session.expired, and put its signing secret in STRIPE_WEBHOOK_SECRET.
+// Stripe tells the app here when a customer has paid or left the payment page, and how an
+// identity check went. Add this URL in the Stripe dashboard (Developers > Webhooks) with the
+// events checkout.session.completed and checkout.session.expired (with Stripe Identity also
+// identity.verification_session.verified and identity.verification_session.requires_input),
+// and put its signing secret in STRIPE_WEBHOOK_SECRET.
 export async function POST(request: Request) {
   const secret = process.env.STRIPE_WEBHOOK_SECRET;
   if (!secret) {
@@ -39,6 +42,10 @@ export async function POST(request: Request) {
         }
       });
     }
+  } else if (event.type === "identity.verification_session.verified") {
+    await identityVerified(event.data.object.id);
+  } else if (event.type === "identity.verification_session.requires_input") {
+    await identityNeedsInput(event.data.object.id, event.data.object.last_error?.reason ?? null);
   } else if (event.type === "checkout.session.expired") {
     const bookingId = event.data.object.metadata?.bookingId;
     if (bookingId) {
