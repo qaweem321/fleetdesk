@@ -6,6 +6,7 @@ const valid: Record<string, string> = {
   businessName: "  City Car Rentals ",
   currency: "usd",
   timeZone: "America/New_York",
+  distanceUnit: "mi",
   contactEmail: "Hello@CityCars.com",
   contactPhone: "+1 555 0100",
   address: "",
@@ -21,6 +22,7 @@ test("accepts and cleans up valid business details", () => {
     businessName: "City Car Rentals",
     currency: "USD",
     timeZone: "America/New_York",
+    distanceUnit: "mi",
     contactEmail: "hello@citycars.com",
     contactPhone: "+1 555 0100",
     address: null,
@@ -34,6 +36,7 @@ test("explains what's wrong with invalid details", () => {
     [{ businessName: "x".repeat(81) }, "at most 80"],
     [{ currency: "ABC" }, "currency"],
     [{ timeZone: "Mars/Base" }, "time zone"],
+    [{ distanceUnit: "leagues" }, "kilometers or miles"],
     [{ contactEmail: "not-an-email" }, "contact email"],
     [{ brandColor: "blue" }, "like #2563eb"],
   ];

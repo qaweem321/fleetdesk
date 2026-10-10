@@ -6,6 +6,7 @@ type Values = {
   businessName?: string;
   currency?: string;
   timeZone?: string;
+  distanceUnit?: string;
   contactEmail?: string | null;
 };
 
@@ -65,6 +66,21 @@ export function BusinessFields({ values = {} }: { values?: Values }) {
           </Select>
         </Field>
       </div>
+      <Field
+        label="Distance unit"
+        htmlFor="distanceUnit"
+        hint="For odometer readings and mileage limits."
+      >
+        <Select
+          id="distanceUnit"
+          name="distanceUnit"
+          defaultValue={values.distanceUnit ?? "km"}
+          className="w-full sm:w-1/2"
+        >
+          <option value="km">Kilometers (km)</option>
+          <option value="mi">Miles (mi)</option>
+        </Select>
+      </Field>
       <Field
         label="Contact email"
         htmlFor="contactEmail"

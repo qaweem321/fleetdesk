@@ -15,3 +15,12 @@ Notable changes for buyers of Fleetdesk. The format follows
   S3-compatible bucket. Private files (licenses, inspection photos) only reach staff and their
   owner.
 - Accounts: sign up, email verification, log in, password reset, delete account.
+
+### Fleet
+- Locations (branches) with address and phone; deactivate instead of delete.
+- Car models (what customers book): class, transmission, fuel, seats, doors, bags,
+  description and photos; hide from the website when needed.
+- Vehicles with number plate, VIN, year, color, mileage and status (available, in
+  maintenance, retired). Plates are unique, even typed with different spaces or dashes.
+- Blocked dates per vehicle (planned service, private use).
+- "Get started" checklist on the admin overview.

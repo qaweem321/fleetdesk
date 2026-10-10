@@ -2,6 +2,7 @@
 
 import type { ComponentProps } from "react";
 import { useFormStatus } from "react-dom";
+import { useActionFormContext } from "@/components/ui/action-form";
 import { Button, type ButtonStyle } from "@/components/ui/button";
 
 type Props = ComponentProps<"button"> &
@@ -22,7 +23,10 @@ export function SubmitButton({
   disabled,
   ...props
 }: Props) {
-  const { pending } = useFormStatus();
+  // A plain <form action> reports through useFormStatus, an ActionForm through its context.
+  const status = useFormStatus();
+  const actionForm = useActionFormContext();
+  const pending = status.pending || actionForm.pending;
 
   return (
     <Button

@@ -3,13 +3,15 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
 import { BusinessFields } from "@/components/business-fields";
+import { ActionForm, ActionMessage } from "@/components/ui/action-form";
 import { ButtonLink } from "@/components/ui/button";
+import { SubmitButton } from "@/components/ui/submit-button";
 import { siteConfig } from "@/config/site";
 import { db } from "@/db";
 import { users } from "@/db/schema";
 import { getOptionalUser } from "@/lib/session";
 import { getSettings } from "@/lib/settings";
-import { SetupForm } from "./setup-form";
+import { completeSetup } from "./actions";
 
 export const metadata: Metadata = { title: "Set up", robots: { index: false } };
 
@@ -60,9 +62,13 @@ export default async function SetupPage() {
       <p className="text-muted-foreground">
         Hi {user.name}! You can change all of this later under Settings.
       </p>
-      <SetupForm>
+      <ActionForm action={completeSetup} className="space-y-4">
         <BusinessFields values={{ contactEmail: user.email }} />
-      </SetupForm>
+        <ActionMessage />
+        <SubmitButton size="full" pendingText="Setting up...">
+          Finish setup
+        </SubmitButton>
+      </ActionForm>
     </Card>
   );
 }

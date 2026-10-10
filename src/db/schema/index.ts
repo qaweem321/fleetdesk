@@ -1,5 +1,6 @@
 // All database tables. Import from "@/db/schema"; each file holds one area of the app.
 export * from "./auth";
 export * from "./files";
+export * from "./fleet";
 export * from "./settings";
 export * from "./staff";

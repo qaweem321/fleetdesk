@@ -4,13 +4,13 @@ import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { db } from "@/db";
 import { businessSettings, files } from "@/db/schema";
-import { formReader, parseBusinessInput } from "@/lib/business-input";
+import type { ActionState } from "@/lib/action-state";
+import { parseBusinessInput } from "@/lib/business-input";
+import { formReader } from "@/lib/form-input";
 import { requireStaff } from "@/lib/session";
 import { requireSettings, settingsChanged } from "@/lib/settings";
 import { deleteFiles } from "@/lib/storage";
 import { isUuid } from "@/lib/uuid";
-
-export type SettingsState = { error?: string; success?: string };
 
 // The logo must be a public photo that exists (ids come from the browser).
 async function checkLogo(value: string) {
@@ -31,9 +31,9 @@ async function checkLogo(value: string) {
 }
 
 export async function updateSettings(
-  _previous: SettingsState,
+  _previous: ActionState,
   formData: FormData,
-): Promise<SettingsState> {
+): Promise<ActionState> {
   const [, current] = await Promise.all([requireStaff("settings:update"), requireSettings()]);
   const read = formReader(formData);
   const parsed = parseBusinessInput(read);

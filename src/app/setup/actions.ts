@@ -4,18 +4,18 @@ import { and, eq, sql } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { db } from "@/db";
 import { businessSettings, users } from "@/db/schema";
-import { formReader, parseBusinessInput } from "@/lib/business-input";
+import type { ActionState } from "@/lib/action-state";
+import { parseBusinessInput } from "@/lib/business-input";
+import { formReader } from "@/lib/form-input";
 import { requireUser } from "@/lib/session";
 import { settingsChanged } from "@/lib/settings";
-
-export type SetupState = { error?: string };
 
 // The first person to finish setup becomes the owner. One conditional UPDATE does the check
 // and the change together, so two people submitting at the same moment can't both win.
 export async function completeSetup(
-  _previous: SetupState,
+  _previous: ActionState,
   formData: FormData,
-): Promise<SetupState> {
+): Promise<ActionState> {
   const user = await requireUser();
   const parsed = parseBusinessInput(formReader(formData));
   if ("error" in parsed) {

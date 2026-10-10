@@ -26,6 +26,7 @@
   --primary-foreground: oklch(100% 0 0);
   --danger: oklch(57.7% 0.245 27.325);
   --success: oklch(52.7% 0.154 150.069);
+  --warning: oklch(55.5% 0.163 48.998);
   color-scheme: light;
 }
 
@@ -48,6 +49,7 @@
   --primary-foreground: oklch(100% 0 0);
   --danger: oklch(70.4% 0.191 22.216);
   --success: oklch(79.2% 0.209 151.711);
+  --warning: oklch(82.8% 0.189 84.429);
   color-scheme: dark;
 }
 
@@ -69,6 +71,7 @@
   --color-primary-foreground: var(--primary-foreground);
   --color-danger: var(--danger);
   --color-success: var(--success);
+  --color-warning: var(--warning);
 }
 
 body {

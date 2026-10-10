@@ -7,6 +7,8 @@ export type StaffRole = (typeof staffRoles)[number];
 
 const permissions = {
   "settings:update": ["owner", "manager"],
+  // Add and change locations, car models, vehicles and blocked dates. Agents can look.
+  "fleet:manage": ["owner", "manager"],
   "staff:invite": ["owner", "manager"],
   // Change someone's role or remove them from the staff.
   "staff:manage": ["owner"],

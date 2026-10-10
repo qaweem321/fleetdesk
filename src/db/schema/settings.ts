@@ -1,7 +1,9 @@
 // The rental business's settings. There is exactly one row (id 1), created by the setup wizard.
 import { sql } from "drizzle-orm";
-import { check, integer, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import { check, integer, pgEnum, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
 import { files } from "./files";
+
+export const distanceUnitEnum = pgEnum("distance_unit", ["km", "mi"]);
 
 export const businessSettings = pgTable(
   "business_settings",
@@ -12,6 +14,8 @@ export const businessSettings = pgTable(
     currency: text("currency").notNull().default("USD"),
     // IANA name ("Europe/Berlin"). Every date and time is shown in this zone.
     timeZone: text("time_zone").notNull().default("UTC"),
+    // Odometer readings and mileage limits use this unit.
+    distanceUnit: distanceUnitEnum("distance_unit").notNull().default("km"),
     contactEmail: text("contact_email"),
     contactPhone: text("contact_phone"),
     address: text("address"),

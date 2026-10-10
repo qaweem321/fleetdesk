@@ -39,14 +39,17 @@ Read the docs that ship with the package before using a Next.js API:
   after writing `business_settings`).
 - `src/lib/storage/`: uploads. `saveImage()`, `deleteFiles()`, `fileUrl()`; files are served by
   `src/app/files/[id]/route.ts`, which checks who may see private files.
+- `src/lib/fleet/`: locations, car models (what customers book) and vehicles (number plates):
+  `input.ts` (form checks), `queries.ts` (reads), `labels.ts` (names for fixed choices).
 - `src/lib/money.ts`: amounts are integers in the currency's smallest unit (`formatMoney`,
   `parseMoney`). `src/lib/format.ts` and `src/lib/time-zone.ts`: dates in the business's zone.
 - `src/lib/env.ts`: environment checks at startup (`src/instrumentation.ts`).
 - `src/lib/demo.ts`: `isDemoMode()` (`DEMO_MODE="true"`): no emails, no verification, banner.
   Anything new that sends email needs a demo-mode path (see staff invitations).
-- `src/components/ui/`: `Button`/`ButtonLink`, `Input`/`Select`/`Textarea`, `Field`,
-  `FormMessage`, `SubmitButton`, `Skeleton`. Shared pieces: `PhotoUpload`, `PublicPage`,
-  `SidebarNav`, `Tabs`, `Logo`, `UserMenu`.
+- `src/components/ui/`: `ActionForm`/`ActionMessage`, `Button`/`ButtonLink`,
+  `Input`/`Select`/`Textarea`, `Field`, `SubmitButton`, `Badge`, `Skeleton`. Admin pieces in
+  `src/components/admin/`: `PageHeader`, `Card`, `EmptyState`, `DeleteForm`. Shared:
+  `PhotoUpload`, `CarPhoto`, `PublicPage`, `SidebarNav`, `Tabs`, `Logo`, `UserMenu`.
 
 ## Rules
 
@@ -83,8 +86,11 @@ Read the docs that ship with the package before using a Next.js API:
   `gray-*` or `blue-*` colors.
 - Reuse `src/components/ui` instead of styling new buttons and inputs; label fields with `Field`.
 - Submit buttons: `SubmitButton` (disabled while sending), with `confirm` for destructive actions.
-- Form actions return user mistakes as state for `useActionState` (`{ error }`), shown with
-  `FormMessage`. Only `throw` for things the UI never allows (tampered requests).
+- Forms: `<ActionForm action={...}>` with `<ActionMessage />` and a `SubmitButton`. The action
+  returns `ActionState` (`{ error }` or `{ success }`); the fields keep what was typed when
+  there's an error. Only `throw` for things the UI never allows (tampered requests).
+- Turn database refusals into messages with `isUniqueViolation()` / `isForeignKeyViolation()`
+  (`src/lib/action-state.ts`) instead of checking first and racing.
 - Dates: `formatDate()` ("Oct 11, 2026"). A sentence ending in a name someone typed:
   `endSentence(name)`.
 - Give icon-only buttons an `aria-label`, mark decorative SVGs `aria-hidden="true"`.

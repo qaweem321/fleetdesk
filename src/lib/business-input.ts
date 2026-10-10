@@ -1,5 +1,6 @@
 import { normalizeHexColor } from "@/lib/branding";
 import { isValidEmail } from "@/lib/email-address";
+import { optionalText as optional, type Read } from "@/lib/form-input";
 import { isValidCurrency } from "@/lib/money";
 import { isValidTimeZone } from "@/lib/time-zone";
 
@@ -9,26 +10,19 @@ export type BusinessInput = {
   businessName: string;
   currency: string;
   timeZone: string;
+  distanceUnit: "km" | "mi";
   contactEmail: string | null;
   contactPhone: string | null;
   address: string | null;
   brandColor: string | null;
 };
 
-type Read = (name: string) => string;
-
-// Reads a form field as trimmed text ("" when missing).
-export function formReader(formData: FormData): Read {
-  return (name) => String(formData.get(name) ?? "").trim();
-}
-
-const optional = (value: string) => value || null;
-
 // Checks the business details from the setup wizard and the Settings page.
 export function parseBusinessInput(read: Read): { values: BusinessInput } | { error: string } {
   const businessName = read("businessName");
   const currency = read("currency").toUpperCase();
   const timeZone = read("timeZone");
+  const distanceUnit = read("distanceUnit");
   const contactEmail = read("contactEmail").toLowerCase();
   const contactPhone = read("contactPhone");
   const address = read("address");
@@ -45,6 +39,9 @@ export function parseBusinessInput(read: Read): { values: BusinessInput } | { er
   }
   if (!isValidTimeZone(timeZone)) {
     return { error: "Please choose a time zone." };
+  }
+  if (distanceUnit !== "km" && distanceUnit !== "mi") {
+    return { error: "Please choose kilometers or miles." };
   }
   if (contactEmail && !isValidEmail(contactEmail)) {
     return { error: "Please enter a valid contact email, or leave it empty." };
@@ -64,6 +61,7 @@ export function parseBusinessInput(read: Read): { values: BusinessInput } | { er
       businessName,
       currency,
       timeZone,
+      distanceUnit,
       contactEmail: optional(contactEmail),
       contactPhone: optional(contactPhone),
       address: optional(address),

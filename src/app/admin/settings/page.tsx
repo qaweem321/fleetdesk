@@ -1,13 +1,15 @@
 import type { Metadata } from "next";
 import { BusinessFields } from "@/components/business-fields";
 import { PhotoUpload } from "@/components/photo-upload";
+import { ActionForm, ActionMessage } from "@/components/ui/action-form";
 import { Field } from "@/components/ui/field";
 import { Input, Textarea } from "@/components/ui/input";
+import { SubmitButton } from "@/components/ui/submit-button";
 import { requireStaff } from "@/lib/session";
 import { requireSettings } from "@/lib/settings";
 import { fileUrl } from "@/lib/storage";
 import { uploadPublicPhoto } from "../uploads";
-import { SettingsForm } from "./settings-form";
+import { updateSettings } from "./actions";
 
 export const metadata: Metadata = { title: "Settings" };
 
@@ -22,7 +24,7 @@ export default async function SettingsPage() {
       </p>
 
       <div className="mt-8">
-        <SettingsForm>
+        <ActionForm action={updateSettings} className="space-y-5">
           <BusinessFields values={settings} />
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="Phone" htmlFor="contactPhone">
@@ -81,7 +83,9 @@ export default async function SettingsPage() {
               label="Upload logo"
             />
           </Field>
-        </SettingsForm>
+          <ActionMessage />
+          <SubmitButton pendingText="Saving...">Save settings</SubmitButton>
+        </ActionForm>
       </div>
     </div>
   );

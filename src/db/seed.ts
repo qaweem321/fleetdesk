@@ -1,13 +1,16 @@
 // Must come first: the database connection reads DATABASE_URL when it is imported.
 import "./load-env";
 import { seedBusiness } from "./seed/business";
+import { seedFleet } from "./seed/fleet";
 import { seedPeople } from "./seed/people";
 
 // `npm run db:seed` fills an empty install with a sample rental business: settings, staff and
-// customer logins (see src/lib/demo.ts). Safe to run again: existing rows are kept.
+// customer logins (see src/lib/demo.ts), locations and a fleet. Safe to run again: existing
+// rows are kept.
 async function seed() {
   await seedBusiness();
   await seedPeople();
+  await seedFleet();
   console.log("Sample data is ready.");
 }
 
