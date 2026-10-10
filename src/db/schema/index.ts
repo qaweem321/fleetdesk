@@ -2,5 +2,6 @@
 export * from "./auth";
 export * from "./files";
 export * from "./fleet";
+export * from "./pricing";
 export * from "./settings";
 export * from "./staff";

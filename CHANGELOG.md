@@ -24,3 +24,13 @@ Notable changes for buyers of Fleetdesk. The format follows
   maintenance, retired). Plates are unique, even typed with different spaces or dashes.
 - Blocked dates per vehicle (planned service, private use).
 - "Get started" checklist on the admin overview.
+
+### Pricing
+- Daily and weekly price per car model (7+ days use the weekly price), deposit, included
+  distance per day and price per extra km or mile.
+- Seasons: raise or lower all prices on certain dates (+20% summer, -15% low season).
+- Extras charged per day or once (child seat, GPS, additional driver, insurance...).
+- Drop-off fee per location for one-way rentals.
+- Coupons: percentage or fixed amount, valid dates, minimum days, maximum uses.
+- Tax rate and name, grace period for late returns, booking notice and longest rental.
+- Price calculator on the Pricing page to check any quote.

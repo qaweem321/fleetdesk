@@ -1,4 +1,5 @@
 import { optionalText, parseWholeNumber, type Read } from "@/lib/form-input";
+import { parseMoney } from "@/lib/money";
 import { fromLocalInput } from "@/lib/time-zone";
 import { isUuid } from "@/lib/uuid";
 import {
@@ -21,12 +22,23 @@ const NAME_MAX = 80;
 const TEXT_MAX = 300;
 const DESCRIPTION_MAX = 2000;
 
-export type LocationInput = { name: string; address: string | null; phone: string | null };
+// An optional price field: empty means 0 (or null with `emptyAs: null`).
+function optionalMoney(text: string, currency: string, emptyAs: 0 | null = 0) {
+  return text ? parseMoney(text, currency) : emptyAs;
+}
 
-export function parseLocationInput(read: Read): Result<LocationInput> {
+export type LocationInput = {
+  name: string;
+  address: string | null;
+  phone: string | null;
+  dropOffFee: number;
+};
+
+export function parseLocationInput(read: Read, currency: string): Result<LocationInput> {
   const name = read("name");
   const address = read("address");
   const phone = read("phone");
+  const dropOffFee = optionalMoney(read("dropOffFee"), currency);
   if (!name) {
     return { error: "Please enter a name for the location." };
   }
@@ -39,7 +51,12 @@ export function parseLocationInput(read: Read): Result<LocationInput> {
   if (phone.length > 40) {
     return { error: "The phone number is too long." };
   }
-  return { values: { name, address: optionalText(address), phone: optionalText(phone) } };
+  if (dropOffFee === null) {
+    return { error: "Please enter the drop-off fee as an amount like 25.00, or leave it empty." };
+  }
+  return {
+    values: { name, address: optionalText(address), phone: optionalText(phone), dropOffFee },
+  };
 }
 
 export type CarModelInput = {
@@ -52,9 +69,14 @@ export type CarModelInput = {
   doors: number;
   bags: number;
   description: string | null;
+  dailyRate: number;
+  weeklyRate: number | null;
+  depositAmount: number;
+  includedDistancePerDay: number | null;
+  extraDistanceFee: number;
 };
 
-export function parseCarModelInput(read: Read): Result<CarModelInput> {
+export function parseCarModelInput(read: Read, currency: string): Result<CarModelInput> {
   const make = read("make");
   const model = read("model");
   const carClass = read("carClass");
@@ -64,6 +86,12 @@ export function parseCarModelInput(read: Read): Result<CarModelInput> {
   const doors = parseWholeNumber(read("doors"), 0, 10);
   const bags = parseWholeNumber(read("bags"), 0, 20);
   const description = read("description");
+  const dailyRate = parseMoney(read("dailyRate"), currency);
+  const weeklyRate = optionalMoney(read("weeklyRate"), currency, null);
+  const depositAmount = optionalMoney(read("depositAmount"), currency);
+  const distanceText = read("includedDistancePerDay");
+  const includedDistancePerDay = distanceText ? parseWholeNumber(distanceText, 1, 100_000) : null;
+  const extraDistanceFee = optionalMoney(read("extraDistanceFee"), currency);
 
   if (!make || !model) {
     return { error: "Please enter the make and the model, like Toyota and Corolla." };
@@ -86,8 +114,28 @@ export function parseCarModelInput(read: Read): Result<CarModelInput> {
   if (description.length > DESCRIPTION_MAX) {
     return { error: `The description can be at most ${DESCRIPTION_MAX} characters.` };
   }
+  if (!dailyRate) {
+    return { error: "Please enter the price per day, like 49.00." };
+  }
+  if (read("weeklyRate") && !weeklyRate) {
+    return { error: "Please enter the weekly price as an amount, or leave it empty." };
+  }
+  if (depositAmount === null || extraDistanceFee === null) {
+    return { error: "Please enter the deposit and the extra distance fee as amounts like 200.00." };
+  }
+  if (distanceText && includedDistancePerDay === null) {
+    return {
+      error:
+        "Please enter the included distance per day as a whole number, or leave it empty for unlimited.",
+    };
+  }
   return {
     values: {
+      dailyRate,
+      weeklyRate,
+      depositAmount,
+      includedDistancePerDay,
+      extraDistanceFee,
       make,
       model,
       carClass,

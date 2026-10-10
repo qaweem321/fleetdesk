@@ -9,6 +9,9 @@ const adminNav: AdminNavItem[] = [
   { label: "Cars", href: "/admin/cars" },
   { label: "Vehicles", href: "/admin/vehicles" },
   { label: "Locations", href: "/admin/locations" },
+  { label: "Pricing", href: "/admin/pricing", permission: "pricing:manage" },
+  { label: "Extras", href: "/admin/extras", permission: "pricing:manage" },
+  { label: "Coupons", href: "/admin/coupons", permission: "pricing:manage" },
   { label: "Staff", href: "/admin/staff" },
   { label: "Settings", href: "/admin/settings", permission: "settings:update" },
 ];

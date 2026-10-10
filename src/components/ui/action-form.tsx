@@ -53,7 +53,9 @@ export function ActionForm({ action, resetOnSuccess = false, children, ...props 
 
   return (
     <FormContext.Provider value={{ pending, state }}>
-      <form ref={formRef} onSubmit={handleSubmit} {...props}>
+      {/* action: a form sent before the page has finished loading still reaches the server
+          action (not the URL). Once loaded, handleSubmit takes over. */}
+      <form ref={formRef} action={dispatch} onSubmit={handleSubmit} {...props}>
         {children}
       </form>
     </FormContext.Provider>

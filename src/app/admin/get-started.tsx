@@ -1,3 +1,4 @@
+import { and, eq } from "drizzle-orm";
 import Link from "next/link";
 import { db } from "@/db";
 import { carModels, locations, vehicles } from "@/db/schema";
@@ -6,9 +7,10 @@ type Step = { label: string; href: string; done: boolean };
 
 // The first things a new owner sets up, in order. Hidden once everything is done.
 export async function GetStarted() {
-  const [locationCount, modelCount, vehicleCount] = await Promise.all([
+  const [locationCount, modelCount, unpricedCount, vehicleCount] = await Promise.all([
     db.$count(locations),
     db.$count(carModels),
+    db.$count(carModels, and(eq(carModels.active, true), eq(carModels.dailyRate, 0))),
     db.$count(vehicles),
   ]);
   const steps: Step[] = [
@@ -17,6 +19,11 @@ export async function GetStarted() {
       label: "Add the car models customers can book",
       href: "/admin/cars/new",
       done: modelCount > 0,
+    },
+    {
+      label: "Set a daily price for every car model",
+      href: "/admin/cars",
+      done: modelCount > 0 && unpricedCount === 0,
     },
     {
       label: "Add the vehicles (number plates)",

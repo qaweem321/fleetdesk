@@ -23,6 +23,8 @@ export const locations = pgTable("locations", {
   name: text("name").notNull(),
   address: text("address"),
   phone: text("phone"),
+  // Charged when a car picked up elsewhere is returned here (a one-way rental). 0 = free.
+  dropOffFee: integer("drop_off_fee").notNull().default(0),
   // Inactive locations can't be picked on the website, but their history stays.
   active: boolean("active").notNull().default(true),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
@@ -55,6 +57,14 @@ export const carModels = pgTable("car_models", {
   doors: integer("doors").notNull(),
   bags: integer("bags").notNull(),
   description: text("description"),
+  // Prices in cents. Rentals of 7 days or more use the weekly price, spread over the days.
+  dailyRate: integer("daily_rate").notNull().default(0),
+  weeklyRate: integer("weekly_rate"),
+  // Held on the customer's card at pickup and released after a clean return.
+  depositAmount: integer("deposit_amount").notNull().default(0),
+  // Distance included per rental day (empty = unlimited) and the price per extra km or mile.
+  includedDistancePerDay: integer("included_distance_per_day"),
+  extraDistanceFee: integer("extra_distance_fee").notNull().default(0),
   // Hidden models stay in the admin area but aren't offered on the website.
   active: boolean("active").notNull().default(true),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),

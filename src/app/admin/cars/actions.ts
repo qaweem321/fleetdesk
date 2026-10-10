@@ -10,6 +10,7 @@ import { type ActionState, isForeignKeyViolation } from "@/lib/action-state";
 import { parseCarModelInput } from "@/lib/fleet/input";
 import { formReader } from "@/lib/form-input";
 import { requireStaff } from "@/lib/session";
+import { requireSettings } from "@/lib/settings";
 import { deleteFiles } from "@/lib/storage";
 import { isUuid } from "@/lib/uuid";
 
@@ -62,8 +63,8 @@ export async function createCarModel(
   _previous: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
-  await requireStaff("fleet:manage");
-  const parsed = parseCarModelInput(formReader(formData));
+  const [, settings] = await Promise.all([requireStaff("fleet:manage"), requireSettings()]);
+  const parsed = parseCarModelInput(formReader(formData), settings.currency);
   if ("error" in parsed) {
     return parsed;
   }
@@ -81,8 +82,8 @@ export async function updateCarModel(
   _previous: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
-  await requireStaff("fleet:manage");
-  const parsed = parseCarModelInput(formReader(formData));
+  const [, settings] = await Promise.all([requireStaff("fleet:manage"), requireSettings()]);
+  const parsed = parseCarModelInput(formReader(formData), settings.currency);
   if ("error" in parsed) {
     return parsed;
   }

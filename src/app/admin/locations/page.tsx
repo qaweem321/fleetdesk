@@ -5,13 +5,18 @@ import { Badge } from "@/components/ui/badge";
 import { listLocations } from "@/lib/fleet/queries";
 import { can } from "@/lib/permissions";
 import { requireStaff } from "@/lib/session";
+import { requireSettings } from "@/lib/settings";
 import { createLocation } from "./actions";
 import { LocationForm } from "./location-form";
 
 export const metadata: Metadata = { title: "Locations" };
 
 export default async function LocationsPage() {
-  const [user, all] = await Promise.all([requireStaff(), listLocations()]);
+  const [user, settings, all] = await Promise.all([
+    requireStaff(),
+    requireSettings(),
+    listLocations(),
+  ]);
   const canManage = can(user.role, "fleet:manage");
 
   return (
@@ -51,7 +56,11 @@ export default async function LocationsPage() {
 
       {canManage && (
         <Card title="Add a location">
-          <LocationForm action={createLocation} submitLabel="Add location" />
+          <LocationForm
+            action={createLocation}
+            currency={settings.currency}
+            submitLabel="Add location"
+          />
         </Card>
       )}
     </div>

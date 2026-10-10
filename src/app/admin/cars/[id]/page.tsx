@@ -11,6 +11,7 @@ import { carModelName } from "@/lib/fleet/labels";
 import { getCarModel, listVehicles } from "@/lib/fleet/queries";
 import { can } from "@/lib/permissions";
 import { requireStaff } from "@/lib/session";
+import { requireSettings } from "@/lib/settings";
 import { isUuid } from "@/lib/uuid";
 import { deleteCarModel, setCarModelActive, updateCarModel } from "../actions";
 import { CarModelForm } from "../car-model-form";
@@ -22,8 +23,9 @@ export default async function CarModelPage({ params }: { params: Promise<{ id: s
   if (!isUuid(id)) {
     notFound();
   }
-  const [user, model, modelVehicles] = await Promise.all([
+  const [user, settings, model, modelVehicles] = await Promise.all([
     requireStaff(),
+    requireSettings(),
     getCarModel(id),
     listVehicles({ carModelId: id }),
   ]);
@@ -81,6 +83,8 @@ export default async function CarModelPage({ params }: { params: Promise<{ id: s
             <CarModelForm
               action={updateCarModel.bind(null, model.id)}
               values={model}
+              currency={settings.currency}
+              distanceUnit={settings.distanceUnit}
               submitLabel="Save car model"
             />
           </Card>

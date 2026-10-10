@@ -9,6 +9,7 @@ import { type ActionState, isForeignKeyViolation } from "@/lib/action-state";
 import { parseLocationInput } from "@/lib/fleet/input";
 import { formReader } from "@/lib/form-input";
 import { requireStaff } from "@/lib/session";
+import { requireSettings } from "@/lib/settings";
 import { isUuid } from "@/lib/uuid";
 
 const LIST = "/admin/locations";
@@ -25,8 +26,8 @@ export async function createLocation(
   _previous: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
-  await requireStaff("fleet:manage");
-  const parsed = parseLocationInput(formReader(formData));
+  const [, settings] = await Promise.all([requireStaff("fleet:manage"), requireSettings()]);
+  const parsed = parseLocationInput(formReader(formData), settings.currency);
   if ("error" in parsed) {
     return parsed;
   }
@@ -40,8 +41,8 @@ export async function updateLocation(
   _previous: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
-  await requireStaff("fleet:manage");
-  const parsed = parseLocationInput(formReader(formData));
+  const [, settings] = await Promise.all([requireStaff("fleet:manage"), requireSettings()]);
+  const parsed = parseLocationInput(formReader(formData), settings.currency);
   if ("error" in parsed) {
     return parsed;
   }

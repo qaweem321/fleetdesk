@@ -1,13 +1,14 @@
 import type { Metadata } from "next";
 import { PageHeader } from "@/components/admin/page-header";
 import { requireStaff } from "@/lib/session";
+import { requireSettings } from "@/lib/settings";
 import { createCarModel } from "../actions";
 import { CarModelForm } from "../car-model-form";
 
 export const metadata: Metadata = { title: "Add car model" };
 
 export default async function NewCarModelPage() {
-  await requireStaff("fleet:manage");
+  const [, settings] = await Promise.all([requireStaff("fleet:manage"), requireSettings()]);
 
   return (
     <div className="max-w-3xl">
@@ -16,7 +17,12 @@ export default async function NewCarModelPage() {
         back={{ label: "Cars", href: "/admin/cars" }}
         description="What customers book. You add its vehicles (number plates) next."
       />
-      <CarModelForm action={createCarModel} submitLabel="Add car model" />
+      <CarModelForm
+        action={createCarModel}
+        currency={settings.currency}
+        distanceUnit={settings.distanceUnit}
+        submitLabel="Add car model"
+      />
     </div>
   );
 }

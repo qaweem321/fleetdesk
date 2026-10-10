@@ -94,6 +94,8 @@ export async function seedFleet() {
         name: "Miami Airport (MIA)",
         address: "Rental Car Center, 3900 NW 25th St, Miami, FL",
         phone: "+1 555 0101",
+        // One-way rentals ending at the airport cost a little extra.
+        dropOffFee: 3500,
       },
       { name: "Downtown Miami", address: "120 Ocean Drive, Miami, FL", phone: "+1 555 0100" },
     ])

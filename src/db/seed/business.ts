@@ -13,6 +13,8 @@ export async function seedBusiness() {
       contactEmail: "hello@sunrise-rental.test",
       contactPhone: "+1 555 0100",
       address: "120 Ocean Drive, Miami, FL",
+      taxRate: 700,
+      taxName: "Sales tax",
     })
     .onConflictDoNothing();
 }

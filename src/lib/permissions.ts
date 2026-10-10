@@ -9,6 +9,8 @@ const permissions = {
   "settings:update": ["owner", "manager"],
   // Add and change locations, car models, vehicles and blocked dates. Agents can look.
   "fleet:manage": ["owner", "manager"],
+  // Prices, seasons, extras, coupons, tax and booking rules.
+  "pricing:manage": ["owner", "manager"],
   "staff:invite": ["owner", "manager"],
   // Change someone's role or remove them from the staff.
   "staff:manage": ["owner"],

@@ -7,6 +7,7 @@ import { SubmitButton } from "@/components/ui/submit-button";
 import { getLocation } from "@/lib/fleet/queries";
 import { can } from "@/lib/permissions";
 import { requireStaff } from "@/lib/session";
+import { requireSettings } from "@/lib/settings";
 import { isUuid } from "@/lib/uuid";
 import { deleteLocation, setLocationActive, updateLocation } from "../actions";
 import { LocationForm } from "../location-form";
@@ -15,7 +16,11 @@ export const metadata: Metadata = { title: "Location" };
 
 export default async function LocationPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const [user, location] = await Promise.all([requireStaff(), isUuid(id) ? getLocation(id) : null]);
+  const [user, settings, location] = await Promise.all([
+    requireStaff(),
+    requireSettings(),
+    isUuid(id) ? getLocation(id) : null,
+  ]);
   if (!location) {
     notFound();
   }
@@ -40,6 +45,7 @@ export default async function LocationPage({ params }: { params: Promise<{ id: s
             <LocationForm
               action={updateLocation.bind(null, location.id)}
               values={location}
+              currency={settings.currency}
               submitLabel="Save location"
             />
           </Card>

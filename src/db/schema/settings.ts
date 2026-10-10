@@ -20,6 +20,15 @@ export const businessSettings = pgTable(
     contactPhone: text("contact_phone"),
     address: text("address"),
     logoFileId: uuid("logo_file_id").references(() => files.id, { onDelete: "set null" }),
+    // Added on top of every price. In hundredths of a percent: 825 = 8.25%.
+    taxRate: integer("tax_rate").notNull().default(0),
+    taxName: text("tax_name").notNull().default("Tax"),
+    // A return up to this many minutes late isn't charged as an extra day.
+    graceMinutes: integer("grace_minutes").notNull().default(59),
+    // Online bookings must start at least this many hours from now...
+    minLeadHours: integer("min_lead_hours").notNull().default(2),
+    // ...and last at most this many days.
+    maxRentalDays: integer("max_rental_days").notNull().default(30),
     // "#2563eb": buttons and highlights on the public site and in the admin area.
     brandColor: text("brand_color"),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),

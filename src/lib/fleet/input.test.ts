@@ -11,11 +11,18 @@ import {
 const reader = (values: Record<string, string>) => (name: string) => (values[name] ?? "").trim();
 
 test("locations need a name; address and phone are optional", () => {
-  assert.deepEqual(parseLocationInput(reader({ name: " Airport " })), {
-    values: { name: "Airport", address: null, phone: null },
+  assert.deepEqual(parseLocationInput(reader({ name: " Airport " }), "USD"), {
+    values: { name: "Airport", address: null, phone: null, dropOffFee: 0 },
   });
-  assert.ok("error" in parseLocationInput(reader({ name: "" })));
-  assert.ok("error" in parseLocationInput(reader({ name: "x".repeat(81) })));
+  assert.ok("error" in parseLocationInput(reader({ name: "" }), "USD"));
+  assert.ok("error" in parseLocationInput(reader({ name: "x".repeat(81) }), "USD"));
+});
+
+test("a location can have a drop-off fee for one-way rentals", () => {
+  const result = parseLocationInput(reader({ name: "Airport", dropOffFee: "35" }), "USD");
+  assert.ok("values" in result);
+  assert.equal(result.values.dropOffFee, 3500);
+  assert.ok("error" in parseLocationInput(reader({ name: "Airport", dropOffFee: "free" }), "USD"));
 });
 
 const corolla = {
@@ -28,13 +35,23 @@ const corolla = {
   doors: "4",
   bags: "2",
   description: "",
+  dailyRate: "45.00",
+  weeklyRate: "",
+  depositAmount: "250",
+  includedDistancePerDay: "",
+  extraDistanceFee: "",
 };
 
 test("reads a car model", () => {
-  const result = parseCarModelInput(reader(corolla));
+  const result = parseCarModelInput(reader(corolla), "USD");
   assert.ok("values" in result);
   assert.equal(result.values.seats, 5);
   assert.equal(result.values.description, null);
+  assert.equal(result.values.dailyRate, 4500);
+  assert.equal(result.values.weeklyRate, null);
+  assert.equal(result.values.depositAmount, 25000);
+  assert.equal(result.values.includedDistancePerDay, null);
+  assert.equal(result.values.extraDistanceFee, 0);
 });
 
 test("explains what's wrong with a car model", () => {
@@ -45,9 +62,14 @@ test("explains what's wrong with a car model", () => {
     [{ fuelType: "coal" }, /fuel type/],
     [{ seats: "0" }, /seats/],
     [{ bags: "two" }, /bags/],
+    [{ dailyRate: "" }, /price per day/],
+    [{ dailyRate: "0" }, /price per day/],
+    [{ weeklyRate: "lots" }, /weekly price/],
+    [{ depositAmount: "-1" }, /deposit/],
+    [{ includedDistancePerDay: "0" }, /included distance/],
   ];
   for (const [change, message] of cases) {
-    const result = parseCarModelInput(reader({ ...corolla, ...change }));
+    const result = parseCarModelInput(reader({ ...corolla, ...change }), "USD");
     assert.ok("error" in result);
     assert.match(result.error, message);
   }

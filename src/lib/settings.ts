@@ -17,7 +17,9 @@ const loadSettings = unstable_cache(
     const [row] = await db.select(columns).from(businessSettings);
     return row ?? null;
   },
-  [SETTINGS_TAG],
+  // The column names are part of the key: after a migration adds a setting, the cached row
+  // (without it) is never used again.
+  [SETTINGS_TAG, Object.keys(columns).join(",")],
   { tags: [SETTINGS_TAG] },
 );
 

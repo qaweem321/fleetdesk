@@ -41,6 +41,9 @@ Read the docs that ship with the package before using a Next.js API:
   `src/app/files/[id]/route.ts`, which checks who may see private files.
 - `src/lib/fleet/`: locations, car models (what customers book) and vehicles (number plates):
   `input.ts` (form checks), `queries.ts` (reads), `labels.ts` (names for fixed choices).
+- `src/lib/pricing/`: the price calculator. `quote.ts` (`calculateQuote`, pure),
+  `build-quote.ts` (`buildQuote`: loads prices from the database and calculates; **every price
+  shown or charged comes from here**), `coupon.ts`, `rental-days.ts`, `input.ts`, `request.ts`.
 - `src/lib/money.ts`: amounts are integers in the currency's smallest unit (`formatMoney`,
   `parseMoney`). `src/lib/format.ts` and `src/lib/time-zone.ts`: dates in the business's zone.
 - `src/lib/env.ts`: environment checks at startup (`src/instrumentation.ts`).
