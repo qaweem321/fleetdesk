@@ -123,6 +123,8 @@ test("reads the booking rules", () => {
     graceMinutes: "59",
     minLeadHours: "2",
     maxRentalDays: "30",
+    turnaroundMinutes: "60",
+    freeCancellationHours: "24",
   };
   assert.deepEqual(parseRulesInput(reader(rules)), {
     values: {
@@ -131,8 +133,15 @@ test("reads the booking rules", () => {
       graceMinutes: 59,
       minLeadHours: 2,
       maxRentalDays: 30,
+      turnaroundMinutes: 60,
+      freeCancellationHours: 24,
     },
   });
   expectError(parseRulesInput(reader({ ...rules, maxRentalDays: "0" })), /longest rental/);
   expectError(parseRulesInput(reader({ ...rules, taxRate: "abc" })), /tax rate/);
+  expectError(parseRulesInput(reader({ ...rules, turnaroundMinutes: "" })), /cleaning time/);
+  expectError(
+    parseRulesInput(reader({ ...rules, freeCancellationHours: "x" })),
+    /Free cancellation/,
+  );
 });

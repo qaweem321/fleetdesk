@@ -34,3 +34,16 @@ Notable changes for buyers of Fleetdesk. The format follows
 - Coupons: percentage or fixed amount, valid dates, minimum days, maximum uses.
 - Tax rate and name, grace period for late returns, booking notice and longest rental.
 - Price calculator on the Pricing page to check any quote.
+
+### Booking website
+- Home page with a search form (pickup and return location, dates and times), the car list
+  with the total price for the chosen dates, and a page per car with photos and specs.
+- Booking with extras, coupon, phone number and a note; the price updates live. Customers pay
+  at pickup.
+- No double bookings, guaranteed by the database, even when two people book the last car at
+  the same second. Cleaning time between rentals.
+- My bookings: every booking with its details and price; online cancellation until the free
+  cancellation deadline (Settings).
+- Emails: booking confirmed (customer), new booking (business), booking cancelled.
+- Bookings in the admin area (upcoming, out now, completed, cancelled) with staff
+  cancellation and an optional email to the customer.

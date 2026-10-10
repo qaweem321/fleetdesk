@@ -1,6 +1,7 @@
 import { and, eq, inArray } from "drizzle-orm";
 import { db } from "@/db";
 import { carModels, extras, locations } from "@/db/schema";
+import { bookingRuleProblem } from "@/lib/bookings/rules";
 import type { BusinessSettings } from "@/lib/settings";
 import { localDateKey } from "@/lib/time-zone";
 import { couponProblem } from "./coupon";
@@ -39,20 +40,13 @@ export async function buildQuote(
   if (request.end <= request.start) {
     return { error: "The return must be after the pickup." };
   }
-  const days = rentalDays(request.start, request.end, settings.graceMinutes);
-  if (forCustomer) {
-    if (request.start.getTime() < now.getTime() + settings.minLeadHours * 3_600_000) {
-      return {
-        error:
-          settings.minLeadHours > 0
-            ? `Online bookings need at least ${settings.minLeadHours} hours' notice.`
-            : "The pickup time has already passed.",
-      };
-    }
-    if (days > settings.maxRentalDays) {
-      return { error: `Online bookings can be at most ${settings.maxRentalDays} days.` };
-    }
+  const ruleProblem = forCustomer
+    ? bookingRuleProblem(request.start, request.end, settings, now)
+    : null;
+  if (ruleProblem) {
+    return { error: ruleProblem };
   }
+  const days = rentalDays(request.start, request.end, settings.graceMinutes);
 
   const extraIds = [...request.extras.keys()];
   const [[model], chosenLocations, seasonRules, chosenExtras, coupon] = await Promise.all([

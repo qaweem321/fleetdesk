@@ -5,6 +5,7 @@ import { absoluteUrl } from "@/config/site";
 export default function sitemap(): MetadataRoute.Sitemap {
   return [
     { url: absoluteUrl("/"), changeFrequency: "monthly", priority: 1 },
+    { url: absoluteUrl("/cars"), changeFrequency: "weekly", priority: 0.9 },
     { url: absoluteUrl("/signup"), changeFrequency: "yearly", priority: 0.5 },
     { url: absoluteUrl("/login"), changeFrequency: "yearly", priority: 0.3 },
     { url: absoluteUrl("/terms"), changeFrequency: "yearly", priority: 0.1 },

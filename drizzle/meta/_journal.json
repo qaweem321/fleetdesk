@@ -22,6 +22,20 @@
       "when": 1791612035627,
       "tag": "0002_pricing",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1791612935029,
+      "tag": "0003_bookings",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1791612941820,
+      "tag": "0004_no_double_bookings",
+      "breakpoints": true
     }
   ]
 }

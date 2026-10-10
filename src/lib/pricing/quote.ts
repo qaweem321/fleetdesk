@@ -37,7 +37,14 @@ export type QuoteInput = {
   taxRate: number;
 };
 
-export type QuoteLine = { id: string; name: string; quantity: number; amount: number };
+export type QuoteLine = {
+  id: string;
+  name: string;
+  price: number;
+  charge: "per_day" | "per_rental";
+  quantity: number;
+  amount: number;
+};
 
 export type Quote = {
   days: number;
@@ -90,6 +97,8 @@ export function calculateQuote(input: QuoteInput): Quote {
     .map((extra) => ({
       id: extra.id,
       name: extra.name,
+      price: extra.price,
+      charge: extra.charge,
       quantity: extra.quantity,
       amount: extra.price * extra.quantity * (extra.charge === "per_day" ? days : 1),
     }));

@@ -1,5 +1,17 @@
-import { and, asc, count, desc, eq, getTableColumns, inArray, type SQL } from "drizzle-orm";
+import {
+  and,
+  asc,
+  count,
+  desc,
+  eq,
+  getTableColumns,
+  gt,
+  inArray,
+  type SQL,
+  sql,
+} from "drizzle-orm";
 import { db } from "@/db";
+import { qualified } from "@/db/qualified";
 import { carModelPhotos, carModels, locations, vehicleBlocks, vehicles } from "@/db/schema";
 import { fileUrl } from "@/lib/storage";
 import type { VehicleStatus } from "./labels";
@@ -35,7 +47,7 @@ export async function locationOptions() {
 }
 
 // The first photo of each model, as a URL (or null).
-async function mainPhotos(modelIds: string[]) {
+export async function mainPhotos(modelIds: string[]) {
   if (modelIds.length === 0) {
     return new Map<string, string>();
   }
@@ -138,4 +150,37 @@ export async function getVehicle(id: string) {
       .orderBy(desc(vehicleBlocks.startsAt)),
   ]);
   return vehicle ? { ...vehicle, blocks } : null;
+}
+
+// What the public website shows: models that are active, have a price and at least one car
+// that isn't retired. Cheapest first, each with its main photo.
+export async function listPublicModels() {
+  const models = await db
+    .select(getTableColumns(carModels))
+    .from(carModels)
+    .where(
+      and(
+        eq(carModels.active, true),
+        gt(carModels.dailyRate, 0),
+        sql`exists (select 1 from ${vehicles} v where v.car_model_id = ${qualified(carModels.id)} and v.status <> 'retired')`,
+      ),
+    )
+    .orderBy(asc(carModels.dailyRate));
+  const photos = await mainPhotos(models.map((model) => model.id));
+  return models.map((model) => ({ ...model, photoUrl: photos.get(model.id) ?? null }));
+}
+
+// Active locations, for the website's pickers.
+export async function publicLocations() {
+  return db
+    .select({ id: locations.id, name: locations.name, address: locations.address })
+    .from(locations)
+    .where(eq(locations.active, true))
+    .orderBy(asc(locations.name));
+}
+
+// One car model for the public website (null when hidden or without a price).
+export async function getPublicModel(id: string) {
+  const model = await getCarModel(id);
+  return model?.active && model.dailyRate > 0 ? model : null;
 }

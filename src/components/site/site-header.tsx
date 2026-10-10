@@ -21,6 +21,9 @@ export async function SiteHeader({ settings }: { settings: BusinessSettings }) {
           logoUrl={settings.logoFileId ? fileUrl(settings.logoFileId) : null}
         />
         <div className="flex items-center gap-4">
+          <Link href="/cars" className={linkClasses}>
+            Cars
+          </Link>
           {user ? (
             isStaff(user.role) ? (
               <ButtonLink href="/admin">Go to admin</ButtonLink>

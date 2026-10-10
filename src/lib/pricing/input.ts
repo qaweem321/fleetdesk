@@ -152,6 +152,8 @@ export type RulesInput = {
   graceMinutes: number;
   minLeadHours: number;
   maxRentalDays: number;
+  turnaroundMinutes: number;
+  freeCancellationHours: number;
 };
 
 // "8.25" -> 825 (hundredths of a percent). Null for anything that isn't 0-100 with at most two
@@ -176,6 +178,8 @@ export function parseRulesInput(read: Read): Result<RulesInput> {
   const graceMinutes = parseWholeNumber(read("graceMinutes"), 0, 240);
   const minLeadHours = parseWholeNumber(read("minLeadHours"), 0, 720);
   const maxRentalDays = parseWholeNumber(read("maxRentalDays"), 1, 365);
+  const turnaroundMinutes = parseWholeNumber(read("turnaroundMinutes"), 0, 1440);
+  const freeCancellationHours = parseWholeNumber(read("freeCancellationHours"), 0, 720);
   if (taxRate === null) {
     return { error: "Please enter the tax rate in %, like 8.25 (0 for no tax)." };
   }
@@ -191,5 +195,21 @@ export function parseRulesInput(read: Read): Result<RulesInput> {
   if (maxRentalDays === null) {
     return { error: "The longest rental must be between 1 and 365 days." };
   }
-  return { values: { taxRate, taxName, graceMinutes, minLeadHours, maxRentalDays } };
+  if (turnaroundMinutes === null) {
+    return { error: "The cleaning time must be between 0 and 1440 minutes." };
+  }
+  if (freeCancellationHours === null) {
+    return { error: "Free cancellation must be between 0 and 720 hours before pickup." };
+  }
+  return {
+    values: {
+      taxRate,
+      taxName,
+      graceMinutes,
+      minLeadHours,
+      maxRentalDays,
+      turnaroundMinutes,
+      freeCancellationHours,
+    },
+  };
 }

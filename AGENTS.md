@@ -44,6 +44,13 @@ Read the docs that ship with the package before using a Next.js API:
 - `src/lib/pricing/`: the price calculator. `quote.ts` (`calculateQuote`, pure),
   `build-quote.ts` (`buildQuote`: loads prices from the database and calculates; **every price
   shown or charged comes from here**), `coupon.ts`, `rental-days.ts`, `input.ts`, `request.ts`.
+- `src/lib/bookings/`: `availability.ts` (which cars are free), `create.ts` (`createBooking`),
+  `cancel.ts`, `queries.ts`, `status.ts` (labels and cancellation rules), `search.ts` (search in
+  the URL), `rules.ts` (notice period, longest rental). **No double bookings** is enforced by an
+  exclusion constraint in `drizzle/0004_no_double_bookings.sql`; keep `HOLDING_STATUSES` in sync
+  with it.
+- `src/lib/notifications/`: emails (booking confirmed, cancelled...). Send them with `after()`
+  so the person doesn't wait.
 - `src/lib/money.ts`: amounts are integers in the currency's smallest unit (`formatMoney`,
   `parseMoney`). `src/lib/format.ts` and `src/lib/time-zone.ts`: dates in the business's zone.
 - `src/lib/env.ts`: environment checks at startup (`src/instrumentation.ts`).

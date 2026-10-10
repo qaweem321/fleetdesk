@@ -6,6 +6,7 @@ type AdminNavItem = NavItem & { permission?: Permission };
 // The admin sidebar. Links someone can't use are left out.
 const adminNav: AdminNavItem[] = [
   { label: "Overview", href: "/admin" },
+  { label: "Bookings", href: "/admin/bookings" },
   { label: "Cars", href: "/admin/cars" },
   { label: "Vehicles", href: "/admin/vehicles" },
   { label: "Locations", href: "/admin/locations" },

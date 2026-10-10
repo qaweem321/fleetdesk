@@ -1,0 +1,206 @@
+"use client";
+
+import Link from "next/link";
+import {
+  type FormEvent,
+  startTransition,
+  useActionState,
+  useRef,
+  useState,
+  useTransition,
+} from "react";
+import { QuoteBreakdown } from "@/components/quote-breakdown";
+import { Button } from "@/components/ui/button";
+import { Field, FormMessage } from "@/components/ui/field";
+import { Input, Select, Textarea } from "@/components/ui/input";
+import { formatMoney } from "@/lib/money";
+import type { Quote } from "@/lib/pricing/quote";
+import { EXTRA_FIELD_PREFIX } from "@/lib/pricing/request";
+import { type BookState, bookCar, type QuoteState, quoteBooking } from "./actions";
+
+type Extra = {
+  id: string;
+  name: string;
+  description: string | null;
+  price: number;
+  charge: "per_day" | "per_rental";
+  maxQuantity: number;
+};
+
+type Props = {
+  // The car, locations and times, sent along unchanged.
+  request: Record<string, string>;
+  extras: Extra[];
+  initialQuote: Quote;
+  currency: string;
+  taxName: string;
+  taxRate: number;
+  phone: string;
+};
+
+// 0, 1, 2 ... max: the choices for an extra customers can add several of.
+function quantities(max: number) {
+  return Array.from({ length: max + 1 }, (_, count) => String(count));
+}
+
+export function BookingForm({
+  request,
+  extras,
+  initialQuote,
+  currency,
+  taxName,
+  taxRate,
+  phone,
+}: Props) {
+  const formRef = useRef<HTMLFormElement>(null);
+  const [priced, setPriced] = useState<QuoteState>({ quote: initialQuote });
+  const [repricing, startRepricing] = useTransition();
+  const [state, dispatch, booking] = useActionState(bookCar, {} as BookState);
+  const quote = priced.quote ?? initialQuote;
+
+  // Recalculate the price after an extra or the coupon changes. The server decides the price.
+  function reprice() {
+    if (!formRef.current) {
+      return;
+    }
+    const formData = new FormData(formRef.current);
+    startRepricing(async () => setPriced(await quoteBooking(formData)));
+  }
+
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    startTransition(() => dispatch(formData));
+  }
+
+  const couponError = state.couponError ?? priced.couponError;
+
+  return (
+    <form
+      ref={formRef}
+      action={dispatch}
+      onSubmit={handleSubmit}
+      className="grid gap-8 lg:grid-cols-[3fr_2fr]"
+    >
+      {Object.entries(request).map(([name, value]) => (
+        <input key={name} type="hidden" name={name} value={value} />
+      ))}
+
+      <div className="space-y-8">
+        {extras.length > 0 && (
+          <section className="space-y-3">
+            <h2 className="text-lg font-semibold">Extras</h2>
+            <ul className="divide-y divide-border rounded-xl border border-border">
+              {extras.map((extra) => {
+                const name = `${EXTRA_FIELD_PREFIX}${extra.id}`;
+                const price = `${formatMoney(extra.price, currency)} ${extra.charge === "per_day" ? "per day" : "once"}`;
+                return (
+                  <li key={extra.id} className="flex items-center justify-between gap-4 p-4">
+                    <label htmlFor={name} className="min-w-0 flex-1 cursor-pointer">
+                      <span className="block font-medium">{extra.name}</span>
+                      <span className="block text-sm text-muted-foreground">
+                        {price}
+                        {extra.description && ` · ${extra.description}`}
+                      </span>
+                    </label>
+                    {extra.maxQuantity > 1 ? (
+                      <Select
+                        id={name}
+                        name={name}
+                        defaultValue="0"
+                        onChange={reprice}
+                        className="w-20"
+                      >
+                        {quantities(extra.maxQuantity).map((count) => (
+                          <option key={count} value={count}>
+                            {count}
+                          </option>
+                        ))}
+                      </Select>
+                    ) : (
+                      <input
+                        id={name}
+                        name={name}
+                        type="checkbox"
+                        value="1"
+                        onChange={reprice}
+                        className="h-5 w-5 accent-[var(--primary)]"
+                      />
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          </section>
+        )}
+
+        <section className="space-y-4">
+          <h2 className="text-lg font-semibold">Your details</h2>
+          <Field label="Mobile phone" htmlFor="phone" hint="So we can reach you about your rental.">
+            <Input
+              id="phone"
+              name="phone"
+              type="tel"
+              required
+              autoComplete="tel"
+              defaultValue={phone}
+              className="sm:max-w-64"
+            />
+          </Field>
+          <Field label="Note for us" htmlFor="note" hint="Optional, e.g. your flight number.">
+            <Textarea id="note" name="note" maxLength={500} className="min-h-16" />
+          </Field>
+        </section>
+      </div>
+
+      <aside className="space-y-4 lg:sticky lg:top-6 lg:self-start">
+        <div className="rounded-2xl border border-border p-5 space-y-4">
+          <h2 className="text-lg font-semibold">Price</h2>
+          <div className={repricing ? "opacity-50" : undefined} aria-busy={repricing}>
+            <QuoteBreakdown
+              quote={quote}
+              currency={currency}
+              taxName={taxName}
+              taxRate={taxRate}
+              couponCode={priced.couponCode}
+            />
+          </div>
+          <div className="space-y-1">
+            <label htmlFor="coupon" className="block text-sm font-medium">
+              Coupon code
+            </label>
+            <div className="flex gap-2">
+              <Input id="coupon" name="coupon" maxLength={30} className="uppercase" />
+              <Button type="button" variant="outline" onClick={reprice} disabled={repricing}>
+                Apply
+              </Button>
+            </div>
+            {couponError && <p className="text-sm text-danger">{couponError}</p>}
+          </div>
+          <p className="text-sm text-muted-foreground">
+            You pay at pickup. Nothing is charged now.
+          </p>
+          <label className="flex items-start gap-2 text-sm">
+            <input
+              type="checkbox"
+              name="acceptTerms"
+              required
+              className="mt-0.5 h-4 w-4 accent-[var(--primary)]"
+            />
+            <span>
+              I accept the{" "}
+              <Link href="/terms" target="_blank" className="text-link underline">
+                rental terms
+              </Link>
+              .
+            </span>
+          </label>
+          <FormMessage error={state.error ?? priced.error} />
+          <Button size="full" disabled={booking || repricing}>
+            {booking ? "Booking..." : "Book now"}
+          </Button>
+        </div>
+      </aside>
+    </form>
+  );
+}

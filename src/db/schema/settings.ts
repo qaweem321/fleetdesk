@@ -29,6 +29,10 @@ export const businessSettings = pgTable(
     minLeadHours: integer("min_lead_hours").notNull().default(2),
     // ...and last at most this many days.
     maxRentalDays: integer("max_rental_days").notNull().default(30),
+    // Cleaning time after each return before the car can be rented again.
+    turnaroundMinutes: integer("turnaround_minutes").notNull().default(60),
+    // Customers can cancel online until this many hours before pickup.
+    freeCancellationHours: integer("free_cancellation_hours").notNull().default(24),
     // "#2563eb": buttons and highlights on the public site and in the admin area.
     brandColor: text("brand_color"),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),

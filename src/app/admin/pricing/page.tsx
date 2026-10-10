@@ -177,6 +177,36 @@ export default async function PricingPage() {
               />
             </Field>
           </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field
+              label="Cleaning time (minutes)"
+              htmlFor="turnaroundMinutes"
+              hint="After each return, before the car can be rented again."
+            >
+              <Input
+                id="turnaroundMinutes"
+                name="turnaroundMinutes"
+                type="number"
+                min={0}
+                max={1440}
+                defaultValue={settings.turnaroundMinutes}
+              />
+            </Field>
+            <Field
+              label="Free cancellation (hours before pickup)"
+              htmlFor="freeCancellationHours"
+              hint="Until then, customers can cancel online."
+            >
+              <Input
+                id="freeCancellationHours"
+                name="freeCancellationHours"
+                type="number"
+                min={0}
+                max={720}
+                defaultValue={settings.freeCancellationHours}
+              />
+            </Field>
+          </div>
           <ActionMessage />
           <SubmitButton pendingText="Saving...">Save rules</SubmitButton>
         </ActionForm>
