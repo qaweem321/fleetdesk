@@ -1,0 +1,51 @@
+{
+  "name": "fleetdesk",
+  "version": "1.0.0",
+  "private": true,
+  "license": "SEE LICENSE IN LICENSE",
+  "engines": {
+    "node": ">=20.12"
+  },
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "typecheck": "tsc --noEmit",
+    "lint": "biome check .",
+    "format": "biome check --write .",
+    "test": "tsx --test \"src/**/*.test.ts\"",
+    "check": "npm run typecheck && npm run lint && npm test && npm run build",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:studio": "drizzle-kit studio",
+    "db:seed": "tsx src/db/seed.ts"
+  },
+  "dependencies": {
+    "@neondatabase/serverless": "^1.2.0",
+    "aws4fetch": "^1.0.20",
+    "better-auth": "^1.7.7",
+    "drizzle-orm": "^0.45.3",
+    "next": "^16.4.0",
+    "postgres": "^3.4.9",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "stripe": "^23.0.0"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.5.15",
+    "@tailwindcss/postcss": "^4.3.3",
+    "@types/node": "^26.6.4",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "drizzle-kit": "^0.31.11",
+    "postcss": "^8.5.29",
+    "tailwindcss": "^4.3.3",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2"
+  },
+  "overrides": {
+    "@esbuild-kit/core-utils": {
+      "esbuild": "^0.25.12"
+    }
+  }
+}

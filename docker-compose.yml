@@ -1,0 +1,48 @@
+# Run Echoboard with its own Postgres database:
+#   cp .env.example .env   (fill it in; DATABASE_URL is set below)
+#   docker compose up -d --build
+# The app listens on port 3000. Put a reverse proxy with HTTPS (Caddy, Nginx, Traefik) in front.
+
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: echoboard
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change-this-password}
+      POSTGRES_DB: echoboard
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U echoboard -d echoboard"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # Applies database migrations, then exits. The app starts after it succeeds.
+  migrate:
+    build:
+      context: .
+      target: migrator
+    environment:
+      DATABASE_URL: postgresql://echoboard:${POSTGRES_PASSWORD:-change-this-password}@db:5432/echoboard
+    depends_on:
+      db:
+        condition: service_healthy
+
+  app:
+    build:
+      context: .
+      target: runner
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql://echoboard:${POSTGRES_PASSWORD:-change-this-password}@db:5432/echoboard
+    ports:
+      - "3000:3000"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+volumes:
+  db-data:

@@ -1,0 +1,24 @@
+# Caddy in front of Echoboard (docker compose or any server), with automatic HTTPS for your
+# own domain AND for every workspace's custom domain (feedback.theircompany.com).
+# Replace app.example.com and the email address, then run: caddy run --config deploy/Caddyfile
+
+{
+	email you@example.com
+	on_demand_tls {
+		# Caddy only gets a certificate for a domain a workspace has saved on its Branding page.
+		ask http://localhost:3000/api/custom-domain-check
+	}
+}
+
+# Your app.
+app.example.com {
+	reverse_proxy localhost:3000
+}
+
+# Workspaces' custom domains.
+https:// {
+	tls {
+		on_demand
+	}
+	reverse_proxy localhost:3000
+}

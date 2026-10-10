@@ -1,0 +1,80 @@
+@import "tailwindcss";
+
+/* `dark:` classes apply when <html> has the "dark" class (see src/lib/theme.ts and src/components/theme.tsx). */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/*
+ * Colors are named by purpose, not by shade. Use `bg-background`, `text-muted-foreground`,
+ * `border-border`, etc. in components. To restyle the app, change the values below.
+ */
+:root {
+  --background: oklch(100% 0 0);
+  --foreground: oklch(21% 0.034 264.665);
+  --surface: oklch(98.5% 0.002 247.839);
+  --muted: oklch(96.7% 0.003 264.542);
+  --accent: oklch(92.8% 0.006 264.531);
+  --secondary-foreground: oklch(37.3% 0.034 259.733);
+  --muted-foreground: oklch(44.6% 0.03 256.802);
+  --subtle-foreground: oklch(55.1% 0.027 264.364);
+  --faint-foreground: oklch(70.7% 0.022 261.325);
+  --border: oklch(92.8% 0.006 264.531);
+  --input: oklch(87.2% 0.01 258.338);
+  --input-hover: oklch(70.7% 0.022 261.325);
+  --link: oklch(54.6% 0.245 262.881);
+  /* Buttons and selected states. Portals override it with the workspace's brand color. */
+  --primary: oklch(54.6% 0.245 262.881);
+  --primary-foreground: oklch(100% 0 0);
+  --danger: oklch(57.7% 0.245 27.325);
+  --success: oklch(52.7% 0.154 150.069);
+  color-scheme: light;
+}
+
+.dark {
+  --background: oklch(13% 0.028 261.692);
+  --foreground: oklch(98.5% 0.002 247.839);
+  --surface: oklch(21% 0.034 264.665);
+  --muted: oklch(27.8% 0.033 256.848);
+  --accent: oklch(37.3% 0.034 259.733);
+  --secondary-foreground: oklch(87.2% 0.01 258.338);
+  --muted-foreground: oklch(70.7% 0.022 261.325);
+  --subtle-foreground: oklch(70.7% 0.022 261.325);
+  --faint-foreground: oklch(55.1% 0.027 264.364);
+  --border: oklch(27.8% 0.033 256.848);
+  --input: oklch(37.3% 0.034 259.733);
+  --input-hover: oklch(44.6% 0.03 256.802);
+  --link: oklch(70.7% 0.165 254.624);
+  /* Buttons and selected states. Portals override it with the workspace's brand color. */
+  --primary: oklch(54.6% 0.245 262.881);
+  --primary-foreground: oklch(100% 0 0);
+  --danger: oklch(70.4% 0.191 22.216);
+  --success: oklch(79.2% 0.209 151.711);
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-subtle-foreground: var(--subtle-foreground);
+  --color-faint-foreground: var(--faint-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-input-hover: var(--input-hover);
+  --color-link: var(--link);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-danger: var(--danger);
+  --color-success: var(--success);
+}
+
+body {
+  @apply bg-background text-foreground antialiased;
+}
+
+button:not(:disabled) {
+  cursor: pointer;
+}

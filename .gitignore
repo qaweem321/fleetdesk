@@ -1,0 +1,19 @@
+node_modules
+.next
+.env*
+!.env.example
+next-env.d.ts
+*.tsbuildinfo
+.claude
+
+# Local AI tool connectors (read secrets from environment variables)
+.mcp.json
+
+# Release zips and sales notes (not part of the kit)
+releases/
+
+# Seller-only build plan (not part of the product)
+PLAN.md
+
+# Uploaded files when STORAGE_DRIVER is "local"
+uploads/
