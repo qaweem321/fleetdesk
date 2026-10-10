@@ -67,6 +67,14 @@ export function checkEnv(env: Env = process.env) {
     problems.push("STRIPE_SECRET_KEY should start with sk_test_ or sk_live_.");
   }
 
+  // The daily reminder job is protected by this secret.
+  if (isProduction) {
+    required("CRON_SECRET");
+  }
+  if (env.CRON_SECRET && env.CRON_SECRET.length < 16) {
+    problems.push("CRON_SECRET must be at least 16 characters long.");
+  }
+
   const driver = env.DATABASE_DRIVER;
   if (driver && driver !== "neon" && driver !== "postgres") {
     problems.push(`DATABASE_DRIVER must be "neon" or "postgres" (or empty), not "${driver}".`);

@@ -8,6 +8,7 @@ test("owners can do everything", () => {
     "fleet:manage",
     "pricing:manage",
     "payments:refund",
+    "reports:view",
     "staff:invite",
     "staff:manage",
   ] as const) {
@@ -20,6 +21,7 @@ test("managers run the business but can't change who is staff", () => {
   assert.equal(can("manager", "fleet:manage"), true);
   assert.equal(can("manager", "pricing:manage"), true);
   assert.equal(can("manager", "payments:refund"), true);
+  assert.equal(can("manager", "reports:view"), true);
   assert.equal(can("manager", "staff:invite"), true);
   assert.equal(can("manager", "staff:manage"), false);
 });
@@ -30,6 +32,7 @@ test("agents and customers can't change settings or staff", () => {
     assert.equal(can(role, "fleet:manage"), false);
     assert.equal(can(role, "pricing:manage"), false);
     assert.equal(can(role, "payments:refund"), false);
+    assert.equal(can(role, "reports:view"), false);
     assert.equal(can(role, "staff:invite"), false);
     assert.equal(can(role, "staff:manage"), false);
   }

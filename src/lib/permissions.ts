@@ -13,6 +13,8 @@ const permissions = {
   "pricing:manage": ["owner", "manager"],
   // Give money back. Everyone at the counter can record payments.
   "payments:refund": ["owner", "manager"],
+  // Income and how busy the fleet is.
+  "reports:view": ["owner", "manager"],
   "staff:invite": ["owner", "manager"],
   // Change someone's role or remove them from the staff.
   "staff:manage": ["owner"],

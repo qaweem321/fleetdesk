@@ -10,10 +10,12 @@ const adminNav: AdminNavItem[] = [
   { label: "Customers", href: "/admin/customers" },
   { label: "Cars", href: "/admin/cars" },
   { label: "Vehicles", href: "/admin/vehicles" },
+  { label: "Maintenance", href: "/admin/maintenance" },
   { label: "Locations", href: "/admin/locations" },
   { label: "Pricing", href: "/admin/pricing", permission: "pricing:manage" },
   { label: "Extras", href: "/admin/extras", permission: "pricing:manage" },
   { label: "Coupons", href: "/admin/coupons", permission: "pricing:manage" },
+  { label: "Reports", href: "/admin/reports", permission: "reports:view" },
   { label: "Staff", href: "/admin/staff" },
   { label: "Settings", href: "/admin/settings", permission: "settings:update" },
 ];

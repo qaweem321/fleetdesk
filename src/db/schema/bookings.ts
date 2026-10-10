@@ -86,6 +86,9 @@ export const bookings = pgTable(
     // When the keys were really handed over and the car really came back.
     pickedUpAt: timestamp("picked_up_at", { withTimezone: true }),
     returnedAt: timestamp("returned_at", { withTimezone: true }),
+    // Reminder emails already sent (so the daily job never sends one twice).
+    pickupReminderSentAt: timestamp("pickup_reminder_sent_at", { withTimezone: true }),
+    returnReminderSentAt: timestamp("return_reminder_sent_at", { withTimezone: true }),
     cancelledAt: timestamp("cancelled_at", { withTimezone: true }),
     cancelReason: text("cancel_reason"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),

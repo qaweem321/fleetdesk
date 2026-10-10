@@ -76,3 +76,13 @@ Notable changes for buyers of Fleetdesk. The format follows
 - Printable signed agreement and receipt, for staff and the customer. Emails with the agreement
   at pickup and the receipt at return.
 - Rental terms and fuel charge under Settings.
+
+### Fleet care and reports
+- Maintenance per vehicle: due on a date and/or at a mileage, repeating; overdue and due-soon
+  services on the Maintenance page and the dashboard.
+- Dashboard: cars out, free and in maintenance, income, late returns, licenses to check, and
+  today's pickups and returns.
+- Reports: income, bookings, booking value and utilization per car model, for the last 30 days,
+  this month or last month.
+- Daily job: pickup and return reminder emails (sent once), a morning summary for the
+  business, and cleanup of photos that were uploaded but never used.

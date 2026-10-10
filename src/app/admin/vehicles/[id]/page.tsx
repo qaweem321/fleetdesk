@@ -8,10 +8,15 @@ import { SubmitButton } from "@/components/ui/submit-button";
 import { carModelName } from "@/lib/fleet/labels";
 import { getVehicle } from "@/lib/fleet/queries";
 import { formatDateTime } from "@/lib/format";
+import { listOpenTasks } from "@/lib/maintenance/queries";
 import { can } from "@/lib/permissions";
 import { requireStaff } from "@/lib/session";
 import { requireSettings } from "@/lib/settings";
+import { localDateKey } from "@/lib/time-zone";
 import { isUuid } from "@/lib/uuid";
+import { addTask } from "../../maintenance/actions";
+import { TaskForm } from "../../maintenance/task-form";
+import { TaskList } from "../../maintenance/task-list";
 import { addBlock, deleteVehicle, removeBlock, updateVehicle } from "../actions";
 import { BlockForm } from "../block-form";
 import { vehicleFormOptions } from "../options";
@@ -34,6 +39,7 @@ export default async function VehiclePage({ params }: { params: Promise<{ id: st
     notFound();
   }
   const canManage = can(user.role, "fleet:manage");
+  const tasks = await listOpenTasks(localDateKey(new Date(), settings.timeZone), vehicle.id);
   const now = new Date();
   const upcomingBlocks = vehicle.blocks.filter((block) => block.endsAt > now);
 
@@ -53,6 +59,23 @@ export default async function VehiclePage({ params }: { params: Promise<{ id: st
           </span>
         }
       />
+
+      <Card title="Maintenance">
+        {tasks.length > 0 ? (
+          <TaskList tasks={tasks} distanceUnit={settings.distanceUnit} showVehicle={false} />
+        ) : (
+          <p className="text-sm text-muted-foreground">No services planned for this car.</p>
+        )}
+        <details className="mt-4">
+          <summary className="cursor-pointer text-sm font-medium text-link">Plan a service</summary>
+          <div className="mt-3">
+            <TaskForm
+              action={addTask.bind(null, vehicle.id)}
+              distanceUnit={settings.distanceUnit}
+            />
+          </div>
+        </details>
+      </Card>
 
       <Card title="Blocked dates">
         <p className="mb-3 text-sm text-muted-foreground">

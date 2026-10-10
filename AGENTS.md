@@ -59,6 +59,11 @@ Read the docs that ship with the package before using a Next.js API:
   `agreement.ts` (`buildAgreementText`; the signed text is saved, never rebuilt), `input.ts`,
   `queries.ts`. Pickup and return live in `src/app/admin/bookings/[id]/pickup` and `/return`.
 - `src/lib/payments/deposits.ts`: deposit holds on the saved card (Stripe) and settling them.
+- `src/lib/maintenance/`: service reminders (`taskUrgency`, `nextTaskDue`, pure).
+- `src/lib/reports/`: `period.ts` (days and months at the business, pure), `queries.ts`
+  (dashboard and reports; real pickup/return times once they happened).
+- `src/lib/notifications/daily.ts`: the daily job behind `/api/cron/daily` (reminders, staff
+  summary, unused upload cleanup). Anything new that should happen once a day goes here.
 - `src/lib/notifications/`: emails (booking confirmed, cancelled...). Send them with `after()`
   so the person doesn't wait.
 - `src/lib/money.ts`: amounts are integers in the currency's smallest unit (`formatMoney`,

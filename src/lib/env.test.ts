@@ -26,11 +26,17 @@ test("rejects an invalid or slash-ending BETTER_AUTH_URL", () => {
 });
 
 test("production also needs Resend", () => {
-  assert.deepEqual(checkEnv({ ...valid, NODE_ENV: "production" }), ["RESEND_API_KEY is missing."]);
+  assert.deepEqual(checkEnv({ ...valid, NODE_ENV: "production" }), [
+    "RESEND_API_KEY is missing.",
+    "CRON_SECRET is missing.",
+  ]);
 });
 
 test("demo mode doesn't need Resend and must be true or false", () => {
-  assert.deepEqual(checkEnv({ ...valid, NODE_ENV: "production", DEMO_MODE: "true" }), []);
+  assert.deepEqual(
+    checkEnv({ ...valid, NODE_ENV: "production", DEMO_MODE: "true", CRON_SECRET: "x".repeat(16) }),
+    [],
+  );
   assert.deepEqual(checkEnv({ ...valid, DEMO_MODE: "on" }), [
     'DEMO_MODE must be "true" or "false", not "on".',
   ]);
@@ -58,6 +64,7 @@ test("Stripe is optional; when used, production needs the webhook secret", () =>
       ...valid,
       NODE_ENV: "production",
       RESEND_API_KEY: "re",
+      CRON_SECRET: "x".repeat(16),
       STRIPE_SECRET_KEY: "sk_live_abc",
     }),
     ["STRIPE_WEBHOOK_SECRET is missing."],
