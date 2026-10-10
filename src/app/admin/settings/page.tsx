@@ -3,13 +3,14 @@ import { BusinessFields } from "@/components/business-fields";
 import { PhotoUpload } from "@/components/photo-upload";
 import { ActionForm, ActionMessage } from "@/components/ui/action-form";
 import { Field } from "@/components/ui/field";
-import { Input, Textarea } from "@/components/ui/input";
+import { Input, Select, Textarea } from "@/components/ui/input";
 import { SubmitButton } from "@/components/ui/submit-button";
+import { stripeConfigured } from "@/lib/payments/options";
 import { requireStaff } from "@/lib/session";
 import { requireSettings } from "@/lib/settings";
 import { fileUrl } from "@/lib/storage";
 import { uploadPublicPhoto } from "../uploads";
-import { updateSettings } from "./actions";
+import { updatePaymentOptions, updateSettings } from "./actions";
 
 export const metadata: Metadata = { title: "Settings" };
 
@@ -87,6 +88,37 @@ export default async function SettingsPage() {
           <SubmitButton pendingText="Saving...">Save settings</SubmitButton>
         </ActionForm>
       </div>
+
+      <section className="mt-12 border-t border-border pt-8">
+        <h2 className="text-lg font-semibold">Payments</h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          How customers pay for a booking. Online payment uses Stripe and saves the card, so the
+          deposit and any charges after the return can go on it without asking again.
+        </p>
+        {stripeConfigured() ? (
+          <ActionForm action={updatePaymentOptions} className="mt-4 space-y-3">
+            <Field label="Customers can" htmlFor="paymentOptions">
+              <Select
+                id="paymentOptions"
+                name="paymentOptions"
+                defaultValue={settings.paymentOptions}
+                className="w-full sm:w-80"
+              >
+                <option value="pay_at_pickup">Only pay at pickup</option>
+                <option value="online">Only pay online when booking</option>
+                <option value="both">Choose: online or at pickup</option>
+              </Select>
+            </Field>
+            <ActionMessage />
+            <SubmitButton pendingText="Saving...">Save payment options</SubmitButton>
+          </ActionForm>
+        ) : (
+          <p className="mt-4 rounded-lg bg-muted p-4 text-sm">
+            Customers pay at pickup. To accept online payments, add your Stripe keys
+            (STRIPE_SECRET_KEY and STRIPE_WEBHOOK_SECRET) as explained in the README.
+          </p>
+        )}
+      </section>
     </div>
   );
 }

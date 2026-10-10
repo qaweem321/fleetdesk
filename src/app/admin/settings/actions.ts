@@ -57,3 +57,23 @@ export async function updateSettings(
   revalidatePath("/", "layout");
   return { success: "Settings saved." };
 }
+
+const PAYMENT_OPTIONS = ["pay_at_pickup", "online", "both"] as const;
+
+export async function updatePaymentOptions(
+  _previous: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  await requireStaff("settings:update");
+  const value = String(formData.get("paymentOptions"));
+  const paymentOptions = PAYMENT_OPTIONS.find((option) => option === value);
+  if (!paymentOptions) {
+    return { error: "Please choose how customers pay." };
+  }
+  await db
+    .update(businessSettings)
+    .set({ paymentOptions, updatedAt: new Date() })
+    .where(eq(businessSettings.id, 1));
+  settingsChanged();
+  return { success: "Payment options saved." };
+}

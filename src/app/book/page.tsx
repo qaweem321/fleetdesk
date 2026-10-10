@@ -9,6 +9,7 @@ import { searchParamsOf } from "@/lib/bookings/search";
 import { carModelName } from "@/lib/fleet/labels";
 import { publicLocations } from "@/lib/fleet/queries";
 import { formatDateTime } from "@/lib/format";
+import { paymentMethodsFor } from "@/lib/payments/options";
 import { buildQuote } from "@/lib/pricing/build-quote";
 import { listExtras } from "@/lib/pricing/queries";
 import { parseQuoteRequest } from "@/lib/pricing/request";
@@ -94,6 +95,7 @@ export default async function BookPage({
           taxName={settings.taxName}
           taxRate={settings.taxRate}
           phone={profile?.phone ?? ""}
+          paymentMethods={paymentMethodsFor(settings.paymentOptions)}
         />
       </div>
     </PublicPage>

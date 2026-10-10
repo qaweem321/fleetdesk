@@ -3,6 +3,7 @@ import { eq, sql } from "drizzle-orm";
 import { atomic } from "@/db/atomic";
 import { bookingExtras, bookings, coupons, users } from "@/db/schema";
 import { isExclusionViolation, isUniqueViolation } from "@/lib/action-state";
+import { HOLD_MINUTES, type PaymentMethod } from "@/lib/payments/options";
 import { type BuiltQuote, buildQuote, type QuoteRequest } from "@/lib/pricing/build-quote";
 import type { BusinessSettings } from "@/lib/settings";
 import { bookingWindow, freeVehicles, releaseExpiredHolds, type Window } from "./availability";
@@ -14,6 +15,8 @@ type CreateBooking = {
   request: QuoteRequest;
   customer: Customer;
   note: string | null;
+  // Online: the booking waits for the payment (and holds the car meanwhile).
+  paymentMethod: PaymentMethod;
   settings: BusinessSettings;
 };
 
@@ -24,8 +27,18 @@ export type CreateResult =
 type Row = CreateBooking & { built: BuiltQuote; window: Window; vehicleId: string };
 
 // Everything the booking stores: who, which car, when, and the price as it is right now.
-function bookingRow({ request, customer, note, settings, built, window, vehicleId }: Row) {
+function bookingRow({
+  request,
+  customer,
+  note,
+  paymentMethod,
+  settings,
+  built,
+  window,
+  vehicleId,
+}: Row) {
   const { quote, model } = built;
+  const online = paymentMethod === "online";
   return {
     customerId: customer.id,
     customerName: customer.name,
@@ -38,9 +51,9 @@ function bookingRow({ request, customer, note, settings, built, window, vehicleI
     pickupAt: request.start,
     returnAt: request.end,
     readyAt: window.readyAt,
-    // Online payments come in phase 5; until then everything is paid at pickup.
-    status: "confirmed" as const,
-    paymentMethod: "pay_at_pickup" as const,
+    status: online ? ("pending_payment" as const) : ("confirmed" as const),
+    paymentMethod,
+    holdExpiresAt: online ? new Date(Date.now() + HOLD_MINUTES * 60_000) : null,
     currency: settings.currency,
     days: quote.days,
     rentalPrice: quote.rentalPrice,
@@ -122,12 +135,4 @@ export async function createBooking(input: CreateBooking): Promise<CreateResult>
     error:
       "Sorry, this car was just booked for these dates. Please choose another car or other dates.",
   };
-}
-
-// For the confirmation page and emails: is the car still free right now? (Shown before the
-// customer presses "Book".)
-export async function hasFreeVehicle(request: QuoteRequest, settings: BusinessSettings) {
-  const window = bookingWindow(request.start, request.end, settings.turnaroundMinutes);
-  const found = await freeVehicles(request.carModelId, request.pickupLocationId, window, 1);
-  return found.length > 0;
 }

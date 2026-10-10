@@ -79,6 +79,10 @@ export const bookings = pgTable(
     customerNote: text("customer_note"),
     // Until when a "pending_payment" booking holds the car.
     holdExpiresAt: timestamp("hold_expires_at", { withTimezone: true }),
+    // Online payment: the Stripe Checkout session, and the card saved there for the deposit and
+    // any charges after the return.
+    stripeCheckoutSessionId: text("stripe_checkout_session_id"),
+    stripePaymentMethodId: text("stripe_payment_method_id"),
     cancelledAt: timestamp("cancelled_at", { withTimezone: true }),
     cancelReason: text("cancel_reason"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),

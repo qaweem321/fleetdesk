@@ -6,16 +6,18 @@ type Statements = readonly [BatchItem<"pg">, ...BatchItem<"pg">[]];
 
 // Runs several writes as one transaction: all of them happen, or none do.
 // Build the statements with the `tx` you're given (not `db`), so they join the transaction.
-export async function atomic(build: (tx: Database) => Statements) {
+// Returns each statement's result in order (e.g. the rows of an update with .returning()).
+export async function atomic(build: (tx: Database) => Statements): Promise<readonly unknown[]> {
   if (driver === "neon") {
     // Neon over HTTP: the whole batch is one request, run as a transaction.
-    await db.batch(build(db));
-    return;
+    return db.batch(build(db));
   }
   // A normal Postgres connection: a regular transaction, statements in order.
-  await db.transaction(async (tx) => {
+  return db.transaction(async (tx) => {
+    const results: unknown[] = [];
     for (const statement of build(tx as unknown as Database)) {
-      await statement;
+      results.push(await statement);
     }
+    return results;
   });
 }

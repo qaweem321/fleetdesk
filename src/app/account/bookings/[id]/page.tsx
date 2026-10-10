@@ -1,22 +1,51 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { after } from "next/server";
 import { DeleteForm } from "@/components/admin/delete-form";
 import { BookingStatusBadge } from "@/components/booking-status-badge";
 import { BookingSummary } from "@/components/booking-summary";
+import { SubmitButton } from "@/components/ui/submit-button";
 import { getBooking } from "@/lib/bookings/queries";
 import { cancellationDeadline, customerCanCancel } from "@/lib/bookings/status";
-import { formatDateTime } from "@/lib/format";
+import { paymentSentence } from "@/lib/bookings/wording";
+import { formatDateTime, formatTime } from "@/lib/format";
 import { formatMoney } from "@/lib/money";
+import { sendBookingConfirmedEmails } from "@/lib/notifications/booking-emails";
+import { completeCheckout } from "@/lib/payments/checkout";
+import { bookingLedger } from "@/lib/payments/records";
 import { requireUser } from "@/lib/session";
-import { requireSettings } from "@/lib/settings";
+import { type BusinessSettings, requireSettings } from "@/lib/settings";
 import { firstParam, type RawSearchParams } from "@/lib/url-params";
 import { isUuid } from "@/lib/uuid";
-import { cancelMyBooking } from "../actions";
+import { cancelMyBooking, payMyBooking } from "../actions";
 
 export const metadata: Metadata = { title: "Booking" };
 
 type Props = { params: Promise<{ id: string }>; searchParams: Promise<RawSearchParams> };
+
+// Back from Stripe's payment page: confirm the payment right away instead of waiting for
+// Stripe's webhook (whichever comes first confirms it; the email goes out once).
+async function confirmReturnFromPayment(
+  sessionId: string,
+  bookingId: string,
+  settings: BusinessSettings,
+) {
+  try {
+    const result = await completeCheckout(sessionId);
+    if (result?.bookingId === bookingId && result.confirmedNow) {
+      after(async () => {
+        const booking = await getBooking(bookingId);
+        if (booking) {
+          await sendBookingConfirmedEmails(booking, settings).catch(console.error);
+        }
+      });
+    }
+  } catch (error) {
+    // The webhook will still confirm it; the page shows "waiting for payment" until then.
+    console.error(error);
+  }
+}
 
 export default async function MyBookingPage({ params, searchParams }: Props) {
   const [{ id }, query, user, settings] = await Promise.all([
@@ -25,16 +54,26 @@ export default async function MyBookingPage({ params, searchParams }: Props) {
     requireUser(),
     requireSettings(),
   ]);
-  const booking = isUuid(id) ? await getBooking(id, user.id) : null;
+  if (!isUuid(id)) {
+    notFound();
+  }
+  const sessionId = firstParam(query.session_id);
+  if (sessionId?.startsWith("cs_")) {
+    await confirmReturnFromPayment(sessionId, id, settings);
+  }
+  const booking = await getBooking(id, user.id);
   if (!booking) {
     notFound();
   }
-  const justBooked = firstParam(query.booked) === "1" && booking.status === "confirmed";
+  const ledger = await bookingLedger(booking.id, booking.total);
+  const justBooked =
+    (firstParam(query.booked) === "1" || Boolean(sessionId)) && booking.status === "confirmed";
   const canCancel = customerCanCancel(booking, settings.freeCancellationHours);
   const deadline = formatDateTime(
     cancellationDeadline(booking.pickupAt, settings.freeCancellationHours),
     settings.timeZone,
   );
+  const money = paymentSentence({ ...booking, paid: ledger.paid, refunded: ledger.refunded });
 
   return (
     <div className="space-y-6">
@@ -49,6 +88,27 @@ export default async function MyBookingPage({ params, searchParams }: Props) {
             We&apos;ve emailed the details to {booking.customerEmail}. Bring your driver&apos;s
             license and a payment card in your name to the pickup.
           </p>
+        </div>
+      )}
+
+      {booking.status === "pending_payment" && (
+        <div className="rounded-xl border border-warning/40 bg-warning/10 p-4 space-y-3">
+          <div>
+            <p className="font-semibold">Your payment isn&apos;t finished</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              We&apos;re holding the car for you
+              {booking.holdExpiresAt
+                ? ` until ${formatTime(booking.holdExpiresAt, settings.timeZone)}`
+                : ""}
+              . Finish paying to confirm the booking.
+            </p>
+          </div>
+          <form action={payMyBooking}>
+            <input type="hidden" name="id" value={booking.id} />
+            <SubmitButton pendingText="Opening...">
+              Pay {formatMoney(booking.total, booking.currency)} now
+            </SubmitButton>
+          </form>
         </div>
       )}
 
@@ -73,22 +133,26 @@ export default async function MyBookingPage({ params, searchParams }: Props) {
 
       <BookingSummary booking={booking} timeZone={settings.timeZone} />
 
-      {booking.status === "confirmed" && (
-        <ul className="space-y-1 text-sm text-muted-foreground">
-          <li>You pay {formatMoney(booking.total, booking.currency)} at pickup.</li>
-          {booking.depositAmount > 0 && (
+      <ul className="space-y-1 text-sm text-muted-foreground">
+        <li>{money}</li>
+        {(booking.status === "confirmed" || booking.status === "pending_payment") &&
+          booking.depositAmount > 0 && (
             <li>
               A deposit of {formatMoney(booking.depositAmount, booking.currency)} is held on your
               card at pickup and released after the return.
             </li>
           )}
-        </ul>
-      )}
+      </ul>
 
       {canCancel ? (
         <section className="rounded-xl border border-border p-5 space-y-3">
           <h3 className="font-semibold">Cancel this booking</h3>
-          <p className="text-sm text-muted-foreground">Free cancellation until {deadline}.</p>
+          <p className="text-sm text-muted-foreground">
+            Free cancellation until {deadline}
+            {ledger.paid > 0 &&
+              `, with a full refund of ${formatMoney(ledger.paid, booking.currency)}`}
+            .
+          </p>
           <DeleteForm
             action={cancelMyBooking}
             fields={{ id: booking.id }}

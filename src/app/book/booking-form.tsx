@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Field, FormMessage } from "@/components/ui/field";
 import { Input, Select, Textarea } from "@/components/ui/input";
 import { formatMoney } from "@/lib/money";
+import type { PaymentMethod } from "@/lib/payments/options";
 import type { Quote } from "@/lib/pricing/quote";
 import { EXTRA_FIELD_PREFIX } from "@/lib/pricing/request";
 import { type BookState, bookCar, type QuoteState, quoteBooking } from "./actions";
@@ -36,6 +37,13 @@ type Props = {
   taxName: string;
   taxRate: number;
   phone: string;
+  // The ways to pay, the first being the default (see paymentMethodsFor).
+  paymentMethods: PaymentMethod[];
+};
+
+const paymentLabels: Record<PaymentMethod, { title: string; text: string }> = {
+  online: { title: "Pay now by card", text: "Secure payment on the next page." },
+  pay_at_pickup: { title: "Pay at pickup", text: "Nothing is charged now." },
 };
 
 // 0, 1, 2 ... max: the choices for an extra customers can add several of.
@@ -51,12 +59,14 @@ export function BookingForm({
   taxName,
   taxRate,
   phone,
+  paymentMethods,
 }: Props) {
   const formRef = useRef<HTMLFormElement>(null);
   const [priced, setPriced] = useState<QuoteState>({ quote: initialQuote });
   const [repricing, startRepricing] = useTransition();
   const [state, dispatch, booking] = useActionState(bookCar, {} as BookState);
   const quote = priced.quote ?? initialQuote;
+  const [paymentMethod, setPaymentMethod] = useState(paymentMethods[0]);
 
   // Recalculate the price after an extra or the coupon changes. The server decides the price.
   function reprice() {
@@ -177,9 +187,39 @@ export function BookingForm({
             </div>
             {couponError && <p className="text-sm text-danger">{couponError}</p>}
           </div>
-          <p className="text-sm text-muted-foreground">
-            You pay at pickup. Nothing is charged now.
-          </p>
+          {paymentMethods.length > 1 ? (
+            <fieldset className="space-y-2">
+              <legend className="mb-1 text-sm font-medium">How would you like to pay?</legend>
+              {paymentMethods.map((method) => (
+                <label
+                  key={method}
+                  className="flex cursor-pointer items-start gap-2 rounded-lg border border-border p-3 text-sm has-[:checked]:border-primary"
+                >
+                  <input
+                    type="radio"
+                    name="paymentMethod"
+                    value={method}
+                    checked={paymentMethod === method}
+                    onChange={() => setPaymentMethod(method)}
+                    className="mt-0.5 accent-[var(--primary)]"
+                  />
+                  <span>
+                    <span className="block font-medium">{paymentLabels[method].title}</span>
+                    <span className="block text-muted-foreground">
+                      {paymentLabels[method].text}
+                    </span>
+                  </span>
+                </label>
+              ))}
+            </fieldset>
+          ) : (
+            <>
+              <input type="hidden" name="paymentMethod" value={paymentMethod} />
+              <p className="text-sm text-muted-foreground">
+                {paymentLabels[paymentMethod].title}. {paymentLabels[paymentMethod].text}
+              </p>
+            </>
+          )}
           <label className="flex items-start gap-2 text-sm">
             <input
               type="checkbox"
@@ -197,7 +237,7 @@ export function BookingForm({
           </label>
           <FormMessage error={state.error ?? priced.error} />
           <Button size="full" disabled={booking || repricing}>
-            {booking ? "Booking..." : "Book now"}
+            {booking ? "Booking..." : paymentMethod === "online" ? "Book and pay" : "Book now"}
           </Button>
         </div>
       </aside>

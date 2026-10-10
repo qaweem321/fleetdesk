@@ -3,6 +3,9 @@ import { sql } from "drizzle-orm";
 import { check, integer, pgEnum, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
 import { files } from "./files";
 
+// How customers can pay. Online payment needs Stripe (STRIPE_SECRET_KEY).
+export const paymentOptionsEnum = pgEnum("payment_options", ["pay_at_pickup", "online", "both"]);
+
 export const distanceUnitEnum = pgEnum("distance_unit", ["km", "mi"]);
 
 export const businessSettings = pgTable(
@@ -29,6 +32,7 @@ export const businessSettings = pgTable(
     minLeadHours: integer("min_lead_hours").notNull().default(2),
     // ...and last at most this many days.
     maxRentalDays: integer("max_rental_days").notNull().default(30),
+    paymentOptions: paymentOptionsEnum("payment_options").notNull().default("pay_at_pickup"),
     // Cleaning time after each return before the car can be rented again.
     turnaroundMinutes: integer("turnaround_minutes").notNull().default(60),
     // Customers can cancel online until this many hours before pickup.

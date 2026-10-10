@@ -7,6 +7,7 @@ import { cancelBooking } from "@/lib/bookings/cancel";
 import { getBooking } from "@/lib/bookings/queries";
 import { formReader } from "@/lib/form-input";
 import { sendBookingCancelledEmails } from "@/lib/notifications/booking-emails";
+import { bookingLedger, refundOnlinePayments } from "@/lib/payments/records";
 import { requireStaff } from "@/lib/session";
 import { requireSettings } from "@/lib/settings";
 import { isUuid } from "@/lib/uuid";
@@ -33,6 +34,12 @@ export async function staffCancelBooking(
   }
   if (!(await cancelBooking(booking.id, reason))) {
     return { error: "Only bookings that haven't been picked up can be cancelled." };
+  }
+  if (read("refund") === "on") {
+    const { paid } = await bookingLedger(booking.id, booking.total);
+    if (paid > 0) {
+      await refundOnlinePayments(booking.id, paid, `Refund: ${reason}`);
+    }
   }
   if (read("notify") === "on") {
     after(() =>

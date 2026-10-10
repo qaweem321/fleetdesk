@@ -12,10 +12,12 @@ import { getBooking } from "@/lib/bookings/queries";
 import { staffCanCancel } from "@/lib/bookings/status";
 import { formatDateTime } from "@/lib/format";
 import { formatMoney } from "@/lib/money";
+import { can } from "@/lib/permissions";
 import { requireStaff } from "@/lib/session";
 import { requireSettings } from "@/lib/settings";
 import { isUuid } from "@/lib/uuid";
 import { staffCancelBooking } from "../actions";
+import { PaymentsCard } from "../payments-card";
 
 export const metadata: Metadata = { title: "Booking" };
 
@@ -24,7 +26,7 @@ export default async function StaffBookingPage({ params }: { params: Promise<{ i
   if (!isUuid(id)) {
     notFound();
   }
-  const [, settings, booking] = await Promise.all([
+  const [user, settings, booking] = await Promise.all([
     requireStaff(),
     requireSettings(),
     getBooking(id),
@@ -87,6 +89,12 @@ export default async function StaffBookingPage({ params }: { params: Promise<{ i
         <BookingSummary booking={booking} timeZone={settings.timeZone} />
       </Card>
 
+      <PaymentsCard
+        booking={booking}
+        timeZone={settings.timeZone}
+        canRefund={can(user.role, "payments:refund")}
+      />
+
       {booking.status === "cancelled" && booking.cancelledAt && (
         <Card title="Cancelled">
           <p className="text-sm">
@@ -121,6 +129,17 @@ export default async function StaffBookingPage({ params }: { params: Promise<{ i
               />
               Email the customer
             </label>
+            {booking.paymentMethod === "online" && (
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  name="refund"
+                  defaultChecked
+                  className="h-4 w-4 accent-[var(--primary)]"
+                />
+                Refund the online payment in full
+              </label>
+            )}
             <ActionMessage />
             <SubmitButton
               variant="danger-outline"

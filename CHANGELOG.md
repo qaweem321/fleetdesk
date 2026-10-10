@@ -47,3 +47,14 @@ Notable changes for buyers of Fleetdesk. The format follows
 - Emails: booking confirmed (customer), new booking (business), booking cancelled.
 - Bookings in the admin area (upcoming, out now, completed, cancelled) with staff
   cancellation and an optional email to the customer.
+
+### Online payments
+- Optional Stripe payments: customers pay when booking (or choose to pay at pickup, per
+  Settings). The car is held while they pay and let go if they don't finish.
+- The card is saved at checkout for the deposit and charges after the return.
+- Free cancellation refunds online payments automatically; staff can refund in full when
+  cancelling, or give any refund later.
+- Payment records per booking: online payments, payments taken at the counter (cash, card
+  terminal, transfer) and refunds, with what's still to pay.
+- Every message about money ("You pay at pickup", "Paid online", "Refunded") follows the real
+  payment records.

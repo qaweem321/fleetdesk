@@ -50,3 +50,17 @@ test("checks DATABASE_DRIVER", () => {
   assert.deepEqual(checkEnv({ ...valid, DATABASE_DRIVER: "postgres" }), []);
   assert.equal(checkEnv({ ...valid, DATABASE_DRIVER: "mysql" }).length, 1);
 });
+
+test("Stripe is optional; when used, production needs the webhook secret", () => {
+  assert.deepEqual(checkEnv({ ...valid, STRIPE_SECRET_KEY: "sk_test_abc" }), []);
+  assert.deepEqual(
+    checkEnv({
+      ...valid,
+      NODE_ENV: "production",
+      RESEND_API_KEY: "re",
+      STRIPE_SECRET_KEY: "sk_live_abc",
+    }),
+    ["STRIPE_WEBHOOK_SECRET is missing."],
+  );
+  assert.equal(checkEnv({ ...valid, STRIPE_SECRET_KEY: "pk_test_abc" }).length, 1);
+});

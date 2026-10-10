@@ -23,6 +23,8 @@ export const users = pgTable("users", {
   role: userRoleEnum("role").notNull().default("customer"),
   // Asked when booking, remembered for the next booking.
   phone: text("phone"),
+  // The customer in Stripe, made at their first online payment and reused after that.
+  stripeCustomerId: text("stripe_customer_id"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });

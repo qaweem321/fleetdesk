@@ -3,6 +3,7 @@ export * from "./auth";
 export * from "./bookings";
 export * from "./files";
 export * from "./fleet";
+export * from "./payments";
 export * from "./pricing";
 export * from "./settings";
 export * from "./staff";

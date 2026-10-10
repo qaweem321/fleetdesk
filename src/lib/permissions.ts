@@ -11,6 +11,8 @@ const permissions = {
   "fleet:manage": ["owner", "manager"],
   // Prices, seasons, extras, coupons, tax and booking rules.
   "pricing:manage": ["owner", "manager"],
+  // Give money back. Everyone at the counter can record payments.
+  "payments:refund": ["owner", "manager"],
   "staff:invite": ["owner", "manager"],
   // Change someone's role or remove them from the staff.
   "staff:manage": ["owner"],

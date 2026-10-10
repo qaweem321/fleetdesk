@@ -49,6 +49,12 @@ Read the docs that ship with the package before using a Next.js API:
   the URL), `rules.ts` (notice period, longest rental). **No double bookings** is enforced by an
   exclusion constraint in `drizzle/0004_no_double_bookings.sql`; keep `HOLDING_STATUSES` in sync
   with it.
+- `src/lib/payments/`: Stripe (optional) and the payment records. `checkout.ts` (online
+  payment, `completeCheckout` is safe to call twice), `records.ts` (`bookingLedger`,
+  `refundOnlinePayments`), `ledger.ts` (pure sums), `options.ts` (`paymentMethodsFor`).
+  Money that moved is only ever added to `payments`, never changed.
+- `src/lib/bookings/wording.ts`: `paymentSentence()`, the one place that says what was paid,
+  refunded or is still due. Use it in pages and emails; extend its tests for new cases.
 - `src/lib/notifications/`: emails (booking confirmed, cancelled...). Send them with `after()`
   so the person doesn't wait.
 - `src/lib/money.ts`: amounts are integers in the currency's smallest unit (`formatMoney`,

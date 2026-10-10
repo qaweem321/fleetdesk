@@ -1,9 +1,11 @@
 import { absoluteUrl } from "@/config/site";
 import type { BookingDetails } from "@/lib/bookings/queries";
 import { cancellationNote } from "@/lib/bookings/status";
+import { paymentSentence } from "@/lib/bookings/wording";
 import { detailsEmailHtml, detailsEmailText, type Email, sendEmails } from "@/lib/email";
 import { formatDateTime } from "@/lib/format";
 import { formatMoney } from "@/lib/money";
+import { bookingLedger } from "@/lib/payments/records";
 import type { BusinessSettings } from "@/lib/settings";
 
 // The emails a booking sends. Built from the saved booking, so they always match what the
@@ -39,6 +41,12 @@ function bookingRows(booking: BookingDetails, settings: BusinessSettings): [stri
   return rows;
 }
 
+// The payment sentence from the booking's payment records, e.g. "Paid online: $200.63."
+async function moneySentence(booking: BookingDetails) {
+  const ledger = await bookingLedger(booking.id, booking.total);
+  return paymentSentence({ ...booking, paid: ledger.paid, refunded: ledger.refunded });
+}
+
 function toEmail(
   to: string,
   subject: string,
@@ -53,7 +61,7 @@ export async function sendBookingConfirmedEmails(
   booking: BookingDetails,
   settings: BusinessSettings,
 ) {
-  const rows = bookingRows(booking, settings);
+  const [rows, money] = await Promise.all([bookingRows(booking, settings), moneySentence(booking)]);
   const deposit =
     booking.depositAmount > 0
       ? ` A deposit of ${formatMoney(booking.depositAmount, booking.currency)} is held on your card at pickup and released after the return.`
@@ -67,7 +75,7 @@ export async function sendBookingConfirmedEmails(
       `Booking confirmed: ${booking.make} ${booking.model} (${booking.reference})`,
       {
         heading: "Your booking is confirmed",
-        message: `Hi ${booking.customerName}, thank you for booking with ${settings.businessName}. You pay at pickup. Please bring your driver's license and a payment card in your name.${deposit}`,
+        message: `Hi ${booking.customerName}, thank you for booking with ${settings.businessName}. ${money} Please bring your driver's license and a payment card in your name.${deposit}`,
         rows,
         button: { text: "View your booking", url: absoluteUrl(`/account/bookings/${booking.id}`) },
         footer: cancellation,
@@ -99,7 +107,7 @@ export async function sendBookingCancelledEmails(
   settings: BusinessSettings,
   cancelledBy: "customer" | "staff",
 ) {
-  const rows = bookingRows(booking, settings);
+  const [rows, money] = await Promise.all([bookingRows(booking, settings), moneySentence(booking)]);
   const emails = [
     toEmail(
       booking.customerEmail,
@@ -108,8 +116,8 @@ export async function sendBookingCancelledEmails(
         heading: "Your booking is cancelled",
         message:
           cancelledBy === "customer"
-            ? `Hi ${booking.customerName}, as requested, your booking with ${settings.businessName} is cancelled.`
-            : `Hi ${booking.customerName}, ${settings.businessName} has cancelled your booking.${booking.cancelReason ? ` Reason: ${booking.cancelReason}` : ""} Please contact us if you have any questions.`,
+            ? `Hi ${booking.customerName}, as requested, your booking with ${settings.businessName} is cancelled. ${money}`
+            : `Hi ${booking.customerName}, ${settings.businessName} has cancelled your booking.${booking.cancelReason ? ` Reason: ${booking.cancelReason}` : ""} ${money} Please contact us if you have any questions.`,
         rows,
       },
       settings.contactEmail,

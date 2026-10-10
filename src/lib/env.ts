@@ -59,6 +59,14 @@ export function checkEnv(env: Env = process.env) {
     }
   }
 
+  // Online payments: the webhook secret is how Stripe proves a payment really happened.
+  if (env.STRIPE_SECRET_KEY && isProduction) {
+    required("STRIPE_WEBHOOK_SECRET");
+  }
+  if (env.STRIPE_SECRET_KEY && !/^(sk|rk)_(test|live)_/.test(env.STRIPE_SECRET_KEY)) {
+    problems.push("STRIPE_SECRET_KEY should start with sk_test_ or sk_live_.");
+  }
+
   const driver = env.DATABASE_DRIVER;
   if (driver && driver !== "neon" && driver !== "postgres") {
     problems.push(`DATABASE_DRIVER must be "neon" or "postgres" (or empty), not "${driver}".`);

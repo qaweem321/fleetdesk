@@ -2,11 +2,14 @@
 
 import { redirect } from "next/navigation";
 import { after } from "next/server";
+import { cancelBooking } from "@/lib/bookings/cancel";
 import { createBooking } from "@/lib/bookings/create";
 import { parseBookingDetails } from "@/lib/bookings/input";
 import { getBooking } from "@/lib/bookings/queries";
 import { formReader } from "@/lib/form-input";
 import { sendBookingConfirmedEmails } from "@/lib/notifications/booking-emails";
+import { startCheckout } from "@/lib/payments/checkout";
+import { paymentMethodsFor } from "@/lib/payments/options";
 import { buildQuote } from "@/lib/pricing/build-quote";
 import type { Quote } from "@/lib/pricing/quote";
 import { parseQuoteRequest } from "@/lib/pricing/request";
@@ -54,6 +57,12 @@ export async function bookCar(_previous: BookState, formData: FormData): Promise
   if (formData.get("acceptTerms") !== "on") {
     return { error: "Please accept the rental terms." };
   }
+  const methods = paymentMethodsFor(settings.paymentOptions);
+  const chosen = String(formData.get("paymentMethod") ?? methods[0]);
+  const paymentMethod = methods.find((method) => method === chosen);
+  if (!paymentMethod) {
+    return { error: "Please choose how you'd like to pay." };
+  }
   // A real customer makes a handful of bookings; this stops scripts from emptying the fleet.
   const { allowed } = await rateLimit(`book:${user.id}`, 10, 60 * 60);
   if (!allowed) {
@@ -64,10 +73,15 @@ export async function bookCar(_previous: BookState, formData: FormData): Promise
     request: parsed.request,
     customer: { id: user.id, name: user.name, email: user.email, phone: details.values.phone },
     note: details.values.note,
+    paymentMethod,
     settings,
   });
   if ("error" in result) {
     return result;
+  }
+  if (paymentMethod === "online") {
+    // To Stripe's payment page. The confirmation email goes out once the payment is in.
+    redirect(await checkoutUrl(result.bookingId, user));
   }
   // Emails go out after the customer has been sent to their booking, so they don't wait.
   after(async () => {
@@ -77,4 +91,20 @@ export async function bookCar(_previous: BookState, formData: FormData): Promise
     }
   });
   redirect(`/account/bookings/${result.bookingId}?booked=1`);
+}
+
+// The payment page for a new online booking. If Stripe can't be reached, the booking is
+// cancelled (the car is let go) and the customer sees an error instead.
+async function checkoutUrl(bookingId: string, user: { id: string; name: string; email: string }) {
+  const booking = await getBooking(bookingId);
+  try {
+    if (!booking) {
+      throw new Error("The booking disappeared before payment.");
+    }
+    return await startCheckout(booking, user);
+  } catch (error) {
+    console.error(error);
+    await cancelBooking(bookingId, "The online payment couldn't be started.");
+    return `/book/payment-problem`;
+  }
 }

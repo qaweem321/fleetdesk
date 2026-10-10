@@ -36,6 +36,20 @@
       "when": 1791612941820,
       "tag": "0004_no_double_bookings",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1791614171429,
+      "tag": "0005_payments",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1791614354418,
+      "tag": "0006_refunds",
+      "breakpoints": true
     }
   ]
 }
