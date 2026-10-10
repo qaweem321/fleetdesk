@@ -4,37 +4,59 @@ import { requireSettings } from "@/lib/settings";
 
 export const metadata: Metadata = { title: "Privacy Policy" };
 
-// Describes what this starter kit actually stores. Update it when you add features.
+// Describes what Fleetdesk actually stores. Update it when you add features.
 export default async function PrivacyPage() {
   const settings = await requireSettings();
   const name = settings.businessName;
-  const companyName = settings.businessName;
-  const supportEmail = settings.contactEmail ?? "";
+  const contact = settings.contactEmail;
+
   return (
-    <LegalPage title="Privacy Policy" lastUpdated="October 5, 2026">
+    <LegalPage title="Privacy Policy" lastUpdated="October 10, 2026">
       <p>
-        This policy explains what personal data {companyName} collects when you use {name}, and why.
+        This policy explains what personal data {name} collects when you rent a car from us, and
+        why.
       </p>
 
       <h2>What we collect</h2>
       <ul>
         <li>Account details: your name, email address and a securely hashed password.</li>
-        <li>Organization details: names, members, roles and pending invitations.</li>
         <li>
-          Session details: your IP address and browser type, to keep you logged in and protect your
-          account.
+          Booking details: dates, locations, the car, extras, prices, your phone number and any note
+          you add.
         </li>
         <li>
-          Billing details: your subscription status. Card details are handled by our payment
-          provider and never reach our servers.
+          Driver details: your date of birth, driver&apos;s license number, issuing country and
+          expiry date, and the photos of your license and ID that you upload. If you use the
+          automatic identity check, it is done by Stripe, who tell us whether it succeeded.
+        </li>
+        <li>
+          Rental records: inspection photos of the car at pickup and return, mileage and fuel
+          levels, the rental agreement you sign (with your signature and the network address it was
+          signed from), and extra charges.
+        </li>
+        <li>
+          Payment records: what you paid and what was refunded. Card details are handled by our
+          payment provider (Stripe) and never reach our servers.
+        </li>
+        <li>
+          Session details: your network address and browser type, to keep you logged in and protect
+          your account.
         </li>
       </ul>
 
       <h2>How we use it</h2>
       <p>
-        Only to run the service: logging you in, sending account emails (verification, password
-        reset, invitations), billing, and preventing abuse. We don&apos;t sell your data or use it
-        for advertising.
+        Only to run your rental: confirming bookings, checking that drivers may drive, handing over
+        and taking back the car, settling payments and deposits, sending booking emails and
+        reminders, keeping the records the law asks of us, and preventing abuse. We don&apos;t sell
+        your data or use it for advertising.
+      </p>
+
+      <h2>Who can see it</h2>
+      <p>
+        Your documents and rental records are only visible to you and to our staff. We share data
+        only with providers that help us run the service, as needed: hosting and database, email
+        delivery, payments and identity checks (Stripe).
       </p>
 
       <h2>Cookies</h2>
@@ -43,30 +65,27 @@ export default async function PrivacyPage() {
         in your browser. We don&apos;t use tracking or advertising cookies.
       </p>
 
-      <h2>Who we share it with</h2>
-      <p>Trusted providers that help us run the service, only as needed:</p>
-      <ul>
-        <li>Hosting and database (for example Vercel and Neon)</li>
-        <li>Email delivery (Resend)</li>
-        <li>Payments (Polar or Stripe)</li>
-      </ul>
-
       <h2>How long we keep it</h2>
       <p>
-        As long as your account exists. You can delete your account from the Account page; your
-        personal data is then removed, except what we must keep by law (for example invoices).
+        As long as your account exists, and rental and payment records for as long as the law
+        requires. You can delete your account from the Account page once you have no upcoming or
+        ongoing rental.
       </p>
 
       <h2>Your rights</h2>
       <p>
-        You can view and update your details on the Account page, and ask for a copy or deletion of
-        your data at any time.
+        You can see and update your details in your account, and ask for a copy or deletion of your
+        data at any time.
       </p>
 
-      <h2>Contact</h2>
-      <p>
-        Questions or requests? Email <a href={`mailto:${supportEmail}`}>{supportEmail}</a>.
-      </p>
+      {contact && (
+        <>
+          <h2>Contact</h2>
+          <p>
+            Questions or requests? Email <a href={`mailto:${contact}`}>{contact}</a>.
+          </p>
+        </>
+      )}
     </LegalPage>
   );
 }

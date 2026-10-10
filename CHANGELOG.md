@@ -6,6 +6,10 @@ Notable changes for buyers of Fleetdesk. The format follows
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-10-10
+
+First public version.
+
 ### Foundation
 - Setup wizard: the first account becomes the owner and names the business (currency, time
   zone, contact email).
@@ -34,6 +38,13 @@ Notable changes for buyers of Fleetdesk. The format follows
 - Coupons: percentage or fixed amount, valid dates, minimum days, maximum uses.
 - Tax rate and name, grace period for late returns, booking notice and longest rental.
 - Price calculator on the Pricing page to check any quote.
+
+### Shipping
+- Docker setup with Postgres, migrations, a photo volume and the daily job; Caddy example;
+  `vercel.json` for Vercel.
+- Demo mode with protected sample logins, sample rentals in every state, and
+  `npm run db:reset-demo`.
+- Terms and Privacy pages written for car rental; sitemap with every car page.
 
 ### Booking website
 - Home page with a search form (pickup and return location, dates and times), the car list
