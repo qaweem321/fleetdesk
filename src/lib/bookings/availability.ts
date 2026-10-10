@@ -82,7 +82,7 @@ export async function freeVehicles(
   limit = 5,
 ) {
   return db
-    .select({ id: vehicles.id })
+    .select({ id: vehicles.id, plate: vehicles.plate, mileage: vehicles.mileage })
     .from(vehicles)
     .where(
       and(

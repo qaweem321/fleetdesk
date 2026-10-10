@@ -83,6 +83,9 @@ export const bookings = pgTable(
     // any charges after the return.
     stripeCheckoutSessionId: text("stripe_checkout_session_id"),
     stripePaymentMethodId: text("stripe_payment_method_id"),
+    // When the keys were really handed over and the car really came back.
+    pickedUpAt: timestamp("picked_up_at", { withTimezone: true }),
+    returnedAt: timestamp("returned_at", { withTimezone: true }),
     cancelledAt: timestamp("cancelled_at", { withTimezone: true }),
     cancelReason: text("cancel_reason"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),

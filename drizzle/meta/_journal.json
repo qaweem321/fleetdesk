@@ -57,6 +57,13 @@
       "when": 1791615143042,
       "tag": "0007_drivers",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1791630604352,
+      "tag": "0008_operations",
+      "breakpoints": true
     }
   ]
 }

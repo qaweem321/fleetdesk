@@ -117,3 +117,21 @@ export async function reviewDriver(
     .returning({ userId: driverProfiles.userId });
   return updated.length > 0;
 }
+
+// Staff saw the license at the counter: the driver is approved, with or without documents
+// sent online.
+export async function approveAtCounter(userId: string, staffId: string) {
+  const now = new Date();
+  const decision = {
+    status: "approved" as const,
+    verifiedBy: "staff",
+    reviewNote: "Checked in person at the counter.",
+    reviewedById: staffId,
+    reviewedAt: now,
+    updatedAt: now,
+  };
+  await db
+    .insert(driverProfiles)
+    .values({ userId, submittedAt: now, ...decision })
+    .onConflictDoUpdate({ target: driverProfiles.userId, set: decision });
+}

@@ -3,7 +3,14 @@ import type { BookingDetails } from "@/lib/bookings/queries";
 import { cancellationNote } from "@/lib/bookings/status";
 import { paymentSentence } from "@/lib/bookings/wording";
 import { getDriverProfile } from "@/lib/drivers/profile";
-import { detailsEmailHtml, detailsEmailText, type Email, sendEmails } from "@/lib/email";
+import {
+  buttonEmailHtml,
+  detailsEmailHtml,
+  detailsEmailText,
+  type Email,
+  sendEmail,
+  sendEmails,
+} from "@/lib/email";
 import { formatDateTime } from "@/lib/format";
 import { formatMoney } from "@/lib/money";
 import { bookingLedger } from "@/lib/payments/records";
@@ -45,7 +52,12 @@ function bookingRows(booking: BookingDetails, settings: BusinessSettings): [stri
 // The payment sentence from the booking's payment records, e.g. "Paid online: $200.63."
 async function moneySentence(booking: BookingDetails) {
   const ledger = await bookingLedger(booking.id, booking.total);
-  return paymentSentence({ ...booking, paid: ledger.paid, refunded: ledger.refunded });
+  return paymentSentence({
+    ...booking,
+    total: ledger.owed,
+    paid: ledger.paid,
+    refunded: ledger.refunded,
+  });
 }
 
 function toEmail(
@@ -147,4 +159,41 @@ export async function sendBookingCancelledEmails(
     );
   }
   await sendEmails(emails);
+}
+
+// When the keys are handed over: a copy of the signed agreement for the customer's records.
+export async function sendRentalStartedEmail(
+  booking: BookingDetails,
+  agreementText: string,
+  settings: BusinessSettings,
+) {
+  const when = formatDateTime(booking.returnAt, settings.timeZone);
+  await sendEmail({
+    to: booking.customerEmail,
+    replyTo: settings.contactEmail,
+    subject: `Your rental agreement (${booking.reference})`,
+    text: `Hi ${booking.customerName}, enjoy your trip! Please return the car by ${when} at ${booking.returnLocationName}.\n\nHere is a copy of the agreement you signed:\n\n${agreementText}`,
+  });
+}
+
+// After the return: the receipt, with any extra charges and what was paid.
+export async function sendRentalCompletedEmail(
+  booking: BookingDetails,
+  settings: BusinessSettings,
+) {
+  const money = await moneySentence(booking);
+  const url = absoluteUrl(`/account/bookings/${booking.id}/receipt`);
+  await sendEmail({
+    to: booking.customerEmail,
+    replyTo: settings.contactEmail,
+    subject: `Thank you for renting with ${settings.businessName} (${booking.reference})`,
+    text: `Hi ${booking.customerName}, the car is back. Thank you for renting with us! ${money}\n\nYour receipt: ${url}`,
+    html: buttonEmailHtml({
+      heading: "Thank you!",
+      message: `Hi ${booking.customerName}, the car is back. Thank you for renting with us! ${money}`,
+      buttonText: "View your receipt",
+      url,
+      footer: settings.businessName,
+    }),
+  });
 }

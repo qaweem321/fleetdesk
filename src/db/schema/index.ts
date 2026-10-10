@@ -4,6 +4,7 @@ export * from "./bookings";
 export * from "./drivers";
 export * from "./files";
 export * from "./fleet";
+export * from "./operations";
 export * from "./payments";
 export * from "./pricing";
 export * from "./settings";

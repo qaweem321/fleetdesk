@@ -14,7 +14,7 @@ export async function SiteHeader({ settings }: { settings: BusinessSettings }) {
   const user = await getOptionalUser();
 
   return (
-    <header className="border-b border-border">
+    <header className="border-b border-border print:hidden">
       <nav className="mx-auto max-w-6xl px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
         <Logo
           name={settings.businessName}

@@ -58,3 +58,21 @@ Notable changes for buyers of Fleetdesk. The format follows
   terminal, transfer) and refunds, with what's still to pay.
 - Every message about money ("You pay at pickup", "Paid online", "Refunded") follows the real
   payment records.
+
+### Renter verification
+- Driver details in the customer's account: date of birth, license number, country, expiry,
+  photos of the license (front and back) and an optional ID.
+- Staff check them under Customers: accept, or ask to fix with a reason (emailed).
+- Minimum driver age, checked when booking (date of birth asked if unknown) and at pickup.
+- Optional automatic ID check with Stripe Identity (license + selfie).
+
+### At the counter
+- Pickup: driver check (or check the license in person), swap to another free car of the same
+  model, mileage, fuel, photos and notes, deposit (held on the saved card or taken at the
+  counter), and the rental agreement signed on screen.
+- Return: mileage, fuel, photos, return location; suggested charges for extra distance, missing
+  fuel and late return, plus damage or other charges; part of the deposit kept, the rest
+  released; the car moves to the return location (or to maintenance).
+- Printable signed agreement and receipt, for staff and the customer. Emails with the agreement
+  at pickup and the receipt at return.
+- Rental terms and fuel charge under Settings.

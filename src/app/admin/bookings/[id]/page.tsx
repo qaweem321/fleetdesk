@@ -4,7 +4,9 @@ import { notFound } from "next/navigation";
 import { Card, PageHeader } from "@/components/admin/page-header";
 import { BookingStatusBadge } from "@/components/booking-status-badge";
 import { BookingSummary } from "@/components/booking-summary";
+import { RentalRecord } from "@/components/rental-record";
 import { ActionForm, ActionMessage } from "@/components/ui/action-form";
+import { ButtonLink } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { SubmitButton } from "@/components/ui/submit-button";
@@ -48,6 +50,17 @@ export default async function StaffBookingPage({ params }: { params: Promise<{ i
         }
       />
 
+      {booking.status === "confirmed" && (
+        <ButtonLink href={`/admin/bookings/${booking.id}/pickup`} size="lg">
+          Start pickup
+        </ButtonLink>
+      )}
+      {booking.status === "active" && (
+        <ButtonLink href={`/admin/bookings/${booking.id}/return`} size="lg">
+          Take the car back
+        </ButtonLink>
+      )}
+
       <div className="grid gap-6 md:grid-cols-2">
         <Card title="Customer">
           <dl className="space-y-1 text-sm">
@@ -78,7 +91,7 @@ export default async function StaffBookingPage({ params }: { params: Promise<{ i
             {booking.plate}
           </Link>
           <p className="mt-2 text-sm text-muted-foreground">
-            {booking.paymentMethod === "pay_at_pickup" ? "Pays at pickup" : "Paid online"}
+            {booking.paymentMethod === "pay_at_pickup" ? "Payment at pickup" : "Online payment"}
             {booking.depositAmount > 0 &&
               ` · deposit ${formatMoney(booking.depositAmount, booking.currency)}`}
           </p>
@@ -88,6 +101,14 @@ export default async function StaffBookingPage({ params }: { params: Promise<{ i
       <Card title="Rental">
         <BookingSummary booking={booking} timeZone={settings.timeZone} />
       </Card>
+
+      <RentalRecord
+        bookingId={booking.id}
+        currency={booking.currency}
+        timeZone={settings.timeZone}
+        distanceUnit={settings.distanceUnit}
+        basePath={`/admin/bookings/${booking.id}`}
+      />
 
       <PaymentsCard
         booking={booking}

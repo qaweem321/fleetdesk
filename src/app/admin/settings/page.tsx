@@ -4,13 +4,15 @@ import { PhotoUpload } from "@/components/photo-upload";
 import { ActionForm, ActionMessage } from "@/components/ui/action-form";
 import { Field } from "@/components/ui/field";
 import { Input, Select, Textarea } from "@/components/ui/input";
+import { MoneyInput } from "@/components/ui/money-input";
 import { SubmitButton } from "@/components/ui/submit-button";
+import { DEFAULT_AGREEMENT_TERMS } from "@/lib/operations/agreement";
 import { stripeConfigured } from "@/lib/payments/options";
 import { requireStaff } from "@/lib/session";
 import { requireSettings } from "@/lib/settings";
 import { fileUrl } from "@/lib/storage";
 import { uploadPublicPhoto } from "../uploads";
-import { updatePaymentOptions, updateSettings } from "./actions";
+import { updatePaymentOptions, updateRentalTerms, updateSettings } from "./actions";
 
 export const metadata: Metadata = { title: "Settings" };
 
@@ -88,6 +90,40 @@ export default async function SettingsPage() {
           <SubmitButton pendingText="Saving...">Save settings</SubmitButton>
         </ActionForm>
       </div>
+
+      <section className="mt-12 border-t border-border pt-8">
+        <h2 className="text-lg font-semibold">Rental agreement</h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          The terms customers sign at pickup, under the rental details. Have them checked for your
+          country.
+        </p>
+        <ActionForm action={updateRentalTerms} className="mt-4 space-y-4">
+          <Field label="Terms" htmlFor="agreementTerms">
+            <Textarea
+              id="agreementTerms"
+              name="agreementTerms"
+              maxLength={10000}
+              defaultValue={settings.agreementTerms ?? DEFAULT_AGREEMENT_TERMS}
+              className="min-h-64 text-sm"
+            />
+          </Field>
+          <Field
+            label="Fuel charge per eighth of a tank"
+            htmlFor="fuelChargePerEighth"
+            hint="Suggested at the return when the tank is less full than at pickup. Empty: no fuel charge."
+          >
+            <MoneyInput
+              id="fuelChargePerEighth"
+              name="fuelChargePerEighth"
+              currency={settings.currency}
+              amount={settings.fuelChargePerEighth || null}
+              className="sm:max-w-40"
+            />
+          </Field>
+          <ActionMessage />
+          <SubmitButton pendingText="Saving...">Save rental terms</SubmitButton>
+        </ActionForm>
+      </section>
 
       <section className="mt-12 border-t border-border pt-8">
         <h2 className="text-lg font-semibold">Payments</h2>

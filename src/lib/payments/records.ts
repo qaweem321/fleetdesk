@@ -1,6 +1,6 @@
-import { and, asc, eq } from "drizzle-orm";
+import { and, asc, eq, sql } from "drizzle-orm";
 import { db } from "@/db";
-import { payments } from "@/db/schema";
+import { bookingCharges, payments } from "@/db/schema";
 import { summarizePayments } from "./ledger";
 import { getStripe } from "./stripe";
 
@@ -52,13 +52,21 @@ export async function refundOnlinePayments(bookingId: string, amount: number, re
   return amount - left;
 }
 
-// What a booking's money looks like now: paid, refunded, deposit held, still due.
-export async function bookingLedger(bookingId: string, total: number) {
-  const rows = await db
-    .select({ kind: payments.kind, amount: payments.amount })
-    .from(payments)
-    .where(eq(payments.bookingId, bookingId));
-  return summarizePayments(rows, total);
+// What a booking's money looks like now: what it costs in total (the booking plus extra charges
+// from the return), paid, refunded, deposit held and still due.
+export async function bookingLedger(bookingId: string, bookingTotal: number) {
+  const [rows, [extra]] = await Promise.all([
+    db
+      .select({ kind: payments.kind, amount: payments.amount })
+      .from(payments)
+      .where(eq(payments.bookingId, bookingId)),
+    db
+      .select({ total: sql<number>`coalesce(sum(${bookingCharges.amount}), 0)`.mapWith(Number) })
+      .from(bookingCharges)
+      .where(eq(bookingCharges.bookingId, bookingId)),
+  ]);
+  const owed = bookingTotal + (extra?.total ?? 0);
+  return { ...summarizePayments(rows, owed), charges: extra?.total ?? 0, owed };
 }
 
 // A booking's payment records, newest last, for the staff page and the receipt.

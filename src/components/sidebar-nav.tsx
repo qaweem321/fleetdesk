@@ -69,7 +69,7 @@ function NavContent({ brand, homeHref, items, footer, onNavigate }: NavProps) {
 
 export function DesktopSidebar(props: NavProps) {
   return (
-    <aside className="w-60 shrink-0 border-r border-border bg-surface p-4 hidden md:flex md:flex-col">
+    <aside className="w-60 shrink-0 border-r border-border bg-surface p-4 hidden md:flex md:flex-col print:hidden">
       <NavContent {...props} />
     </aside>
   );

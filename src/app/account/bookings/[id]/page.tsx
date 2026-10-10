@@ -5,6 +5,7 @@ import { after } from "next/server";
 import { DeleteForm } from "@/components/admin/delete-form";
 import { BookingStatusBadge } from "@/components/booking-status-badge";
 import { BookingSummary } from "@/components/booking-summary";
+import { RentalRecord } from "@/components/rental-record";
 import { ButtonLink } from "@/components/ui/button";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { getBooking } from "@/lib/bookings/queries";
@@ -82,7 +83,12 @@ export default async function MyBookingPage({ params, searchParams }: Props) {
     cancellationDeadline(booking.pickupAt, settings.freeCancellationHours),
     settings.timeZone,
   );
-  const money = paymentSentence({ ...booking, paid: ledger.paid, refunded: ledger.refunded });
+  const money = paymentSentence({
+    ...booking,
+    total: ledger.owed,
+    paid: ledger.paid,
+    refunded: ledger.refunded,
+  });
 
   return (
     <div className="space-y-6">
@@ -153,6 +159,14 @@ export default async function MyBookingPage({ params, searchParams }: Props) {
       )}
 
       <BookingSummary booking={booking} timeZone={settings.timeZone} />
+
+      <RentalRecord
+        bookingId={booking.id}
+        currency={booking.currency}
+        timeZone={settings.timeZone}
+        distanceUnit={settings.distanceUnit}
+        basePath={`/account/bookings/${booking.id}`}
+      />
 
       <ul className="space-y-1 text-sm text-muted-foreground">
         <li>{money}</li>

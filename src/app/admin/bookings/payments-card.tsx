@@ -50,7 +50,12 @@ export async function PaymentsCard({ booking, timeZone, canRefund }: Props) {
       <dl className="grid grid-cols-3 gap-3 text-sm">
         <div>
           <dt className="text-muted-foreground">Total</dt>
-          <dd className="text-lg font-semibold tabular-nums">{money(booking.total)}</dd>
+          <dd className="text-lg font-semibold tabular-nums">{money(ledger.owed)}</dd>
+          {ledger.charges > 0 && (
+            <dd className="text-xs text-muted-foreground">
+              incl. {money(ledger.charges)} extra charges
+            </dd>
+          )}
         </div>
         <div>
           <dt className="text-muted-foreground">Paid</dt>

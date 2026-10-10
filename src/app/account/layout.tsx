@@ -20,14 +20,14 @@ export default async function AccountLayout({ children }: { children: ReactNode 
   return (
     <PublicPage>
       <div className="mx-auto max-w-4xl px-4 sm:px-6 py-10">
-        <div className="flex items-start justify-between gap-4">
+        <div className="flex items-start justify-between gap-4 print:hidden">
           <div>
             <h1 className="text-2xl font-bold">Hi {user.name}</h1>
             <p className="mt-1 text-sm text-muted-foreground">{user.email}</p>
           </div>
           <SignOutButton />
         </div>
-        <div className="mt-6">
+        <div className="mt-6 print:hidden">
           <Tabs items={tabs} />
         </div>
         <div className="mt-6">{children}</div>

@@ -26,7 +26,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
       <DesktopSidebar {...nav} />
 
       <div className="flex-1 min-w-0 flex flex-col">
-        <header className="h-16 border-b border-border px-4 md:px-6 flex items-center justify-between gap-4">
+        <header className="h-16 border-b border-border px-4 md:px-6 flex items-center justify-between gap-4 print:hidden">
           <div className="flex items-center gap-2 min-w-0">
             <MobileMenu {...nav} />
             <span className="truncate text-sm font-medium text-subtle-foreground">

@@ -7,6 +7,8 @@ import { businessSettings, files } from "@/db/schema";
 import type { ActionState } from "@/lib/action-state";
 import { parseBusinessInput } from "@/lib/business-input";
 import { formReader } from "@/lib/form-input";
+import { parseMoney } from "@/lib/money";
+import { DEFAULT_AGREEMENT_TERMS } from "@/lib/operations/agreement";
 import { requireStaff } from "@/lib/session";
 import { requireSettings, settingsChanged } from "@/lib/settings";
 import { deleteFiles } from "@/lib/storage";
@@ -80,4 +82,32 @@ export async function updatePaymentOptions(
     .where(eq(businessSettings.id, 1));
   settingsChanged();
   return { success: "Payment options saved." };
+}
+
+// The rental terms customers sign at pickup, and the fuel charge used at the return.
+export async function updateRentalTerms(
+  _previous: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const [, settings] = await Promise.all([requireStaff("settings:update"), requireSettings()]);
+  const terms = String(formData.get("agreementTerms") ?? "").trim();
+  const fuelText = String(formData.get("fuelChargePerEighth") ?? "").trim();
+  const fuelChargePerEighth = fuelText ? parseMoney(fuelText, settings.currency) : 0;
+  if (terms.length > 10_000) {
+    return { error: "The terms can be at most 10,000 characters." };
+  }
+  if (fuelChargePerEighth === null) {
+    return { error: "Please enter the fuel charge as an amount like 12.00, or leave it empty." };
+  }
+  await db
+    .update(businessSettings)
+    .set({
+      // The built-in template is used while this is empty.
+      agreementTerms: terms && terms !== DEFAULT_AGREEMENT_TERMS ? terms : null,
+      fuelChargePerEighth,
+      updatedAt: new Date(),
+    })
+    .where(eq(businessSettings.id, 1));
+  settingsChanged();
+  return { success: "Rental terms saved. New agreements use them; signed ones keep their text." };
 }

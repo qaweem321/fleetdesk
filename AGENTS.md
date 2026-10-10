@@ -55,6 +55,10 @@ Read the docs that ship with the package before using a Next.js API:
   Money that moved is only ever added to `payments`, never changed.
 - `src/lib/bookings/wording.ts`: `paymentSentence()`, the one place that says what was paid,
   refunded or is still due. Use it in pages and emails; extend its tests for new cases.
+- `src/lib/operations/`: the counter. `charges.ts` (`suggestReturnCharges`, pure),
+  `agreement.ts` (`buildAgreementText`; the signed text is saved, never rebuilt), `input.ts`,
+  `queries.ts`. Pickup and return live in `src/app/admin/bookings/[id]/pickup` and `/return`.
+- `src/lib/payments/deposits.ts`: deposit holds on the saved card (Stripe) and settling them.
 - `src/lib/notifications/`: emails (booking confirmed, cancelled...). Send them with `after()`
   so the person doesn't wait.
 - `src/lib/money.ts`: amounts are integers in the currency's smallest unit (`formatMoney`,

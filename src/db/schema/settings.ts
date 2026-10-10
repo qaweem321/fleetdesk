@@ -42,6 +42,10 @@ export const businessSettings = pgTable(
     // ...and last at most this many days.
     maxRentalDays: integer("max_rental_days").notNull().default(30),
     paymentOptions: paymentOptionsEnum("payment_options").notNull().default("pay_at_pickup"),
+    // The rental terms customers sign at pickup. Empty: the built-in template.
+    agreementTerms: text("agreement_terms"),
+    // Charged per missing eighth of a tank at the return (0 = no automatic fuel charge).
+    fuelChargePerEighth: integer("fuel_charge_per_eighth").notNull().default(0),
     // Drivers must be at least this old on the pickup date.
     minDriverAge: integer("min_driver_age").notNull().default(21),
     // Offer customers an automatic ID check with Stripe Identity (a selfie matched to their
