@@ -150,7 +150,7 @@ export function CarModelForm({ action, values, currency, distanceUnit, submitLab
           <Field
             label="Deposit"
             htmlFor="depositAmount"
-            hint="Held at pickup, released after return."
+            hint="Taken at pickup, given back after the return."
           >
             <MoneyInput
               id="depositAmount"

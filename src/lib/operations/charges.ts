@@ -57,7 +57,10 @@ export function suggestReturnCharges({
   if (missingEighths > 0 && settings.fuelChargePerEighth > 0) {
     lines.push({
       kind: "fuel",
-      description: `Fuel: ${missingEighths}/8 of a tank less than at pickup`,
+      description:
+        missingEighths === 8
+          ? "Fuel: a full tank less than at pickup"
+          : `Fuel: ${tankFraction(missingEighths)} of a tank less than at pickup`,
       amount: missingEighths * settings.fuelChargePerEighth,
     });
   }
@@ -85,6 +88,11 @@ export function fuelLabel(eighths: number) {
   if (eighths === 0) {
     return "Empty";
   }
+  return tankFraction(eighths);
+}
+
+// Eighths of a tank as a simple fraction: 2 -> "1/4", 3 -> "3/8", 4 -> "1/2".
+function tankFraction(eighths: number) {
   const divisor = eighths % 4 === 0 ? 4 : eighths % 2 === 0 ? 2 : 1;
   return `${eighths / divisor}/${8 / divisor}`;
 }

@@ -24,6 +24,7 @@ import { sendRentalCompletedEmail } from "@/lib/notifications/booking-emails";
 import { parseChargeLines, parseInspectionInput } from "@/lib/operations/input";
 import { getInspections } from "@/lib/operations/queries";
 import { settleCardDeposit } from "@/lib/payments/deposits";
+import { depositSettlementRows } from "@/lib/payments/ledger";
 import { bookingLedger } from "@/lib/payments/records";
 import { requireStaff } from "@/lib/session";
 import { requireSettings } from "@/lib/settings";
@@ -141,14 +142,14 @@ export async function completeReturn(
     if (deposit.method === "stripe") {
       await settleCardDeposit(booking.id, keep, staff.id);
     } else {
-      await db.insert(payments).values({
-        bookingId: booking.id,
-        kind: keep > 0 ? "deposit_capture" : "deposit_release",
-        method: deposit.method,
-        amount: keep > 0 ? keep : ledger.depositHeld,
-        description: keep > 0 ? "Kept from the deposit" : "Deposit given back",
-        createdById: staff.id,
-      });
+      await db.insert(payments).values(
+        depositSettlementRows(ledger.depositHeld, keep, "Deposit given back").map((row) => ({
+          ...row,
+          bookingId: booking.id,
+          method: deposit.method,
+          createdById: staff.id,
+        })),
+      );
     }
   }
 

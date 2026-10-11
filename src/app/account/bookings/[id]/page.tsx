@@ -10,7 +10,8 @@ import { ButtonLink } from "@/components/ui/button";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { getBooking } from "@/lib/bookings/queries";
 import { cancellationDeadline, customerCanCancel } from "@/lib/bookings/status";
-import { paymentSentence } from "@/lib/bookings/wording";
+import { depositSentence, paymentSentence } from "@/lib/bookings/wording";
+import { isDemoMode } from "@/lib/demo";
 import { getDriverProfile } from "@/lib/drivers/profile";
 import { formatDateTime, formatTime } from "@/lib/format";
 import { formatMoney } from "@/lib/money";
@@ -100,8 +101,10 @@ export default async function MyBookingPage({ params, searchParams }: Props) {
         <div role="status" className="rounded-xl border border-success/40 bg-success/10 p-4">
           <p className="font-semibold">Your car is booked!</p>
           <p className="mt-1 text-sm text-muted-foreground">
-            We&apos;ve emailed the details to {booking.customerEmail}. Bring your driver&apos;s
-            license and a payment card in your name to the pickup.
+            {isDemoMode()
+              ? "Emails are turned off in this demo."
+              : `We've emailed the details to ${booking.customerEmail}.`}{" "}
+            Bring your driver&apos;s license and a payment card in your name to the pickup.
           </p>
         </div>
       )}
@@ -172,10 +175,7 @@ export default async function MyBookingPage({ params, searchParams }: Props) {
         <li>{money}</li>
         {(booking.status === "confirmed" || booking.status === "pending_payment") &&
           booking.depositAmount > 0 && (
-            <li>
-              A deposit of {formatMoney(booking.depositAmount, booking.currency)} is held on your
-              card at pickup and released after the return.
-            </li>
+            <li>{depositSentence(booking.depositAmount, booking.currency)}</li>
           )}
       </ul>
 

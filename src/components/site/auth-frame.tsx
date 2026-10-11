@@ -10,7 +10,8 @@ export async function AuthFrame({ children }: { children: ReactNode }) {
   return (
     <div className="relative">
       {settings && (
-        <div className="absolute left-0 top-0 p-4 sm:p-6">
+        // On phones the name sits above the form; on wider screens it floats in the corner.
+        <div className="p-4 sm:absolute sm:left-0 sm:top-0 sm:p-6">
           <Logo
             name={settings.businessName}
             logoUrl={settings.logoFileId ? fileUrl(settings.logoFileId) : null}

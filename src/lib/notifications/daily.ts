@@ -1,7 +1,7 @@
 import { and, eq, gt, isNull, lt, lte, type SQL, sql } from "drizzle-orm";
 import { absoluteUrl } from "@/config/site";
 import { db } from "@/db";
-import { bookings, files } from "@/db/schema";
+import { bookings, businessSettings, files } from "@/db/schema";
 import { releaseExpiredHolds } from "@/lib/bookings/availability";
 import { getBooking } from "@/lib/bookings/queries";
 import { buttonEmailHtml, type Email, sendEmails } from "@/lib/email";
@@ -112,6 +112,18 @@ async function staffSummary(settings: BusinessSettings, now: Date) {
   ]);
   const due = tasks.filter((task) => task.urgency !== "later");
   if (counter.pickups.length + counter.returns.length + counter.late.length + due.length === 0) {
+    return false;
+  }
+  // Once a day: claimed in one statement, so two runs at the same time can't both send it.
+  const todayKey = localDateKey(now, settings.timeZone);
+  const claimed = await db
+    .update(businessSettings)
+    .set({ summarySentOn: todayKey })
+    .where(
+      sql`${businessSettings.summarySentOn} is null or ${businessSettings.summarySentOn} < ${todayKey}`,
+    )
+    .returning({ id: businessSettings.id });
+  if (claimed.length === 0) {
     return false;
   }
   const time = (date: Date) => formatDateTime(date, settings.timeZone);

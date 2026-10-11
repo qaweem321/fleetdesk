@@ -15,6 +15,11 @@ type MoneyState = {
   refunded: number;
 };
 
+// True however the deposit is taken: held on the saved card (Stripe) or paid at the counter.
+export function depositSentence(amount: number, currency: string) {
+  return `A deposit of ${formatMoney(amount, currency)} is taken at pickup and given back after the return, minus any extra charges.`;
+}
+
 export function paymentSentence(booking: MoneyState) {
   const money = (amount: number) => formatMoney(amount, booking.currency);
   const due = Math.max(0, booking.total - booking.paid);

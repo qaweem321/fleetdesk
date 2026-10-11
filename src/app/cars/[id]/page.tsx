@@ -103,8 +103,8 @@ export default async function CarPage({ params, searchParams }: Props) {
               </li>
               {model.depositAmount > 0 && (
                 <li>
-                  Deposit of {money(model.depositAmount)}, held on your card and released after the
-                  return
+                  Deposit of {money(model.depositAmount)} at pickup, given back after the return
+                  minus any extra charges
                 </li>
               )}
             </ul>
@@ -142,6 +142,7 @@ export default async function CarPage({ params, searchParams }: Props) {
             locations={locations}
             values={search?.query ?? defaultSearchTimes(settings.timeZone)}
             action={`/cars/${model.id}`}
+            submitLabel="Check these dates"
           />
           {problem && <FormMessage error={problem} />}
         </div>

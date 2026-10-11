@@ -71,6 +71,13 @@
       "when": 1791631485298,
       "tag": "0009_maintenance",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1791727978616,
+      "tag": "0010_daily_summary",
+      "breakpoints": true
     }
   ]
 }

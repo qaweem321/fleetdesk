@@ -114,7 +114,8 @@ and deletes photos that were uploaded but never used. Call
 - **Docker**: the `cron` service in `docker-compose.yml` does it every hour.
 - **Elsewhere**: any scheduler, e.g. `curl -H "Authorization: Bearer $CRON_SECRET" https://.../api/cron/daily`.
 
-Each reminder is sent only once, so running it more often is safe.
+Each reminder is sent only once and the summary once a day, so running it more often is
+safe.
 
 ## Deploying
 

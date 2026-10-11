@@ -3,6 +3,7 @@
 import Link from "next/link";
 import {
   type FormEvent,
+  type KeyboardEvent,
   startTransition,
   useActionState,
   useRef,
@@ -71,13 +72,30 @@ export function BookingForm({
   const quote = priced.quote ?? initialQuote;
   const [paymentMethod, setPaymentMethod] = useState(paymentMethods[0]);
 
+  // Only the newest price counts when changes come quickly one after another.
+  const latestQuote = useRef(0);
+
   // Recalculate the price after an extra or the coupon changes. The server decides the price.
   function reprice() {
     if (!formRef.current) {
       return;
     }
     const formData = new FormData(formRef.current);
-    startRepricing(async () => setPriced(await quoteBooking(formData)));
+    const request = ++latestQuote.current;
+    startRepricing(async () => {
+      const result = await quoteBooking(formData);
+      if (request === latestQuote.current) {
+        setPriced(result);
+      }
+    });
+  }
+
+  // Enter in the coupon field applies the coupon instead of sending the booking.
+  function applyCouponOnEnter(event: KeyboardEvent<HTMLInputElement>) {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      reprice();
+    }
   }
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -198,8 +216,14 @@ export function BookingForm({
               Coupon code
             </label>
             <div className="flex gap-2">
-              <Input id="coupon" name="coupon" maxLength={30} className="uppercase" />
-              <Button type="button" variant="outline" onClick={reprice} disabled={repricing}>
+              <Input
+                id="coupon"
+                name="coupon"
+                maxLength={30}
+                className="uppercase"
+                onKeyDown={applyCouponOnEnter}
+              />
+              <Button type="button" variant="outline" onClick={reprice}>
                 Apply
               </Button>
             </div>

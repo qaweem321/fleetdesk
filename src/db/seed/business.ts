@@ -15,6 +15,8 @@ export async function seedBusiness() {
       address: "120 Ocean Drive, Miami, FL",
       taxRate: 700,
       taxName: "Sales tax",
+      // $12 per missing eighth of a tank, as on the sample rentals.
+      fuelChargePerEighth: 1200,
     })
     .onConflictDoNothing();
 }

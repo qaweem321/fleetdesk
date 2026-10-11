@@ -249,7 +249,7 @@ export function ReturnForm({
             <dd className="tabular-nums">{money(chargesTotal)}</dd>
           </div>
           <div className="flex justify-between border-t border-border pt-1 font-semibold">
-            <dt>To pay now</dt>
+            <dt>Owed now</dt>
             <dd className="tabular-nums">{money(owed)}</dd>
           </div>
         </dl>
@@ -259,8 +259,8 @@ export function ReturnForm({
             htmlFor="depositKeep"
             hint={
               depositOnCard
-                ? "The rest of the deposit is released on the customer's card."
-                : "Give the rest of the deposit back to the customer."
+                ? "Filled in with what's owed. The rest is released on the customer's card; anything the deposit doesn't cover is paid now."
+                : "Filled in with what's owed. Give the rest back to the customer; anything the deposit doesn't cover is paid now."
             }
           >
             <Input

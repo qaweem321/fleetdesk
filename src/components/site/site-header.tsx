@@ -6,7 +6,9 @@ import { getOptionalUser } from "@/lib/session";
 import type { BusinessSettings } from "@/lib/settings";
 import { fileUrl } from "@/lib/storage";
 
-const linkClasses = "text-sm text-muted-foreground hover:text-foreground";
+const linkClasses = "whitespace-nowrap text-sm text-muted-foreground hover:text-foreground";
+// Keeps "Sign up" and "My bookings" on one line on narrow phones.
+const buttonClasses = "whitespace-nowrap px-3 sm:px-4";
 
 // The top bar of every public page. Logged-in people get a link to their own area instead of
 // "Log in / Sign up".
@@ -20,22 +22,28 @@ export async function SiteHeader({ settings }: { settings: BusinessSettings }) {
           name={settings.businessName}
           logoUrl={settings.logoFileId ? fileUrl(settings.logoFileId) : null}
         />
-        <div className="flex items-center gap-4">
+        <div className="flex shrink-0 items-center gap-3 sm:gap-4">
           <Link href="/cars" className={linkClasses}>
             Cars
           </Link>
           {user ? (
             isStaff(user.role) ? (
-              <ButtonLink href="/admin">Go to admin</ButtonLink>
+              <ButtonLink href="/admin" className={buttonClasses}>
+                Go to admin
+              </ButtonLink>
             ) : (
-              <ButtonLink href="/account">My bookings</ButtonLink>
+              <ButtonLink href="/account" className={buttonClasses}>
+                My bookings
+              </ButtonLink>
             )
           ) : (
             <>
               <Link href="/login" className={linkClasses}>
                 Log in
               </Link>
-              <ButtonLink href="/signup">Sign up</ButtonLink>
+              <ButtonLink href="/signup" className={buttonClasses}>
+                Sign up
+              </ButtonLink>
             </>
           )}
         </div>

@@ -27,7 +27,7 @@ function NavContent({ brand, homeHref, items, footer, onNavigate }: NavProps) {
         logoUrl={brand.logoUrl}
         href={homeHref}
         onClick={onNavigate}
-        className="block px-2 mb-8"
+        className="px-2 mb-8"
       />
 
       <nav className="flex flex-col gap-1">

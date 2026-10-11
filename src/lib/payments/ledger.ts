@@ -44,3 +44,21 @@ export function summarizePayments(entries: LedgerEntry[], bookingTotal: number):
   const paid = received - refunded;
   return { paid, refunded, depositHeld: held, due: Math.max(0, bookingTotal - paid) };
 }
+
+// The records written when a deposit is settled at the return: what was kept and what went back
+// to the customer, so the payment list shows both (e.g. $104 kept, $146 given back).
+export function depositSettlementRows(held: number, keep: number, givenBack: string) {
+  const kept = Math.min(Math.max(keep, 0), held);
+  const rows: {
+    kind: "deposit_capture" | "deposit_release";
+    amount: number;
+    description: string;
+  }[] = [];
+  if (kept > 0) {
+    rows.push({ kind: "deposit_capture", amount: kept, description: "Kept from the deposit" });
+  }
+  if (held - kept > 0) {
+    rows.push({ kind: "deposit_release", amount: held - kept, description: givenBack });
+  }
+  return rows;
+}

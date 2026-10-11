@@ -76,3 +76,11 @@ test("fuel levels read like a fuel gauge", () => {
   assert.equal(fuelLabel(3), "3/8");
   assert.equal(fuelLabel(0), "Empty");
 });
+
+test("writes the missing fuel as a simple fraction", () => {
+  const charge = (fuelLevel: number) =>
+    suggestReturnCharges({ ...base, back: { ...base.back, fuelLevel } })[0]?.description;
+  assert.equal(charge(6), "Fuel: 1/4 of a tank less than at pickup");
+  assert.equal(charge(4), "Fuel: 1/2 of a tank less than at pickup");
+  assert.equal(charge(0), "Fuel: a full tank less than at pickup");
+});

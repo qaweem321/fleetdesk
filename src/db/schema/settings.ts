@@ -3,6 +3,7 @@ import { sql } from "drizzle-orm";
 import {
   boolean,
   check,
+  date,
   integer,
   pgEnum,
   pgTable,
@@ -46,6 +47,9 @@ export const businessSettings = pgTable(
     agreementTerms: text("agreement_terms"),
     // Charged per missing eighth of a tank at the return (0 = no automatic fuel charge).
     fuelChargePerEighth: integer("fuel_charge_per_eighth").notNull().default(0),
+    // The business's calendar date of the last morning summary email, so the daily job can run
+    // as often as it likes and the summary still goes out once a day.
+    summarySentOn: date("summary_sent_on"),
     // Drivers must be at least this old on the pickup date.
     minDriverAge: integer("min_driver_age").notNull().default(21),
     // Offer customers an automatic ID check with Stripe Identity (a selfie matched to their

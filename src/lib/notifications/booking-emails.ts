@@ -1,7 +1,7 @@
 import { absoluteUrl } from "@/config/site";
 import type { BookingDetails } from "@/lib/bookings/queries";
 import { cancellationNote } from "@/lib/bookings/status";
-import { paymentSentence } from "@/lib/bookings/wording";
+import { depositSentence, paymentSentence } from "@/lib/bookings/wording";
 import { getDriverProfile } from "@/lib/drivers/profile";
 import {
   buttonEmailHtml,
@@ -84,9 +84,7 @@ export async function sendBookingConfirmedEmails(
       ? ""
       : " Save time at pickup: send your driver's license in your account (Driver details).";
   const deposit =
-    booking.depositAmount > 0
-      ? ` A deposit of ${formatMoney(booking.depositAmount, booking.currency)} is held on your card at pickup and released after the return.`
-      : "";
+    booking.depositAmount > 0 ? ` ${depositSentence(booking.depositAmount, booking.currency)}` : "";
   const cancellation = cancellationNote(booking.pickupAt, settings.freeCancellationHours, (date) =>
     formatDateTime(date, settings.timeZone),
   );

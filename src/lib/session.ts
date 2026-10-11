@@ -45,14 +45,15 @@ export async function redirectIfLoggedIn() {
 }
 
 // Every admin page and staff action starts with this. Customers get a 404, so the admin area
-// doesn't even show that it exists. With a permission, staff without it get an error.
+// doesn't even show that it exists. Staff without the permission get the same "doesn't exist,
+// or you don't have access" page (their menu never links there).
 export const requireStaff = cache(async (permission?: Permission) => {
   const user = await requireUser();
   if (!isStaff(user.role)) {
     notFound();
   }
   if (permission && !can(user.role, permission)) {
-    throw new Error("You don't have permission to do that.");
+    notFound();
   }
   return { ...user, role: user.role as StaffRole };
 });

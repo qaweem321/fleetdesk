@@ -96,4 +96,5 @@ First public version.
 - Reports: income, bookings, booking value and utilization per car model, for the last 30 days,
   this month or last month.
 - Daily job: pickup and return reminder emails (sent once), a morning summary for the
-  business, and cleanup of photos that were uploaded but never used.
+  business (once a day, however often the job runs), and cleanup of photos that were
+  uploaded but never used.

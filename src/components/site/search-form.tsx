@@ -13,6 +13,7 @@ type Props = {
   };
   // Where the form goes: the car list, or the same car page with new dates.
   action?: string;
+  submitLabel?: string;
 };
 
 function TimeSelect({ id, name, value }: { id: string; name: string; value: string }) {
@@ -29,7 +30,12 @@ function TimeSelect({ id, name, value }: { id: string; name: string; value: stri
 
 // "Where and when?": pickup and return location, dates and times. A plain form that sends the
 // search in the web address, so it works without JavaScript and results can be shared.
-export function SearchForm({ locations, values, action = "/cars" }: Props) {
+export function SearchForm({
+  locations,
+  values,
+  action = "/cars",
+  submitLabel = "Find a car",
+}: Props) {
   const [pickupDate = "", pickupTime = ""] = (values.pickupAt ?? "").split("T");
   const [returnDate = "", returnTime = ""] = (values.returnAt ?? "").split("T");
   const differentReturn =
@@ -38,7 +44,7 @@ export function SearchForm({ locations, values, action = "/cars" }: Props) {
   return (
     <form
       action={action}
-      className="grid gap-4 rounded-2xl border border-border bg-surface p-4 shadow-sm sm:p-6 md:grid-cols-2 xl:grid-cols-[1fr_1fr_auto_auto_auto]"
+      className="grid grid-cols-1 gap-4 rounded-2xl border border-border bg-surface p-4 shadow-sm sm:p-6 md:grid-cols-2 xl:grid-cols-[1fr_1fr_auto_auto_auto]"
     >
       <Field label="Pick up at" htmlFor="search-pickup-location">
         <Select
@@ -98,7 +104,7 @@ export function SearchForm({ locations, values, action = "/cars" }: Props) {
       </Field>
       <div className="flex items-end md:col-span-2 xl:col-span-1">
         <button type="submit" className={buttonClasses({ size: "lg", className: "w-full" })}>
-          Find a car
+          {submitLabel}
         </button>
       </div>
     </form>

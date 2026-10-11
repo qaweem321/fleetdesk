@@ -2,6 +2,7 @@ import { and, desc, eq } from "drizzle-orm";
 import Stripe from "stripe";
 import { db } from "@/db";
 import { bookings, payments, users } from "@/db/schema";
+import { depositSettlementRows } from "./ledger";
 import { getStripe, stripeCurrency } from "./stripe";
 
 // The deposit: held at pickup, then charged in part (damage, fuel...) or let go at the return.
@@ -86,27 +87,20 @@ export async function settleCardDeposit(bookingId: string, amount: number, staff
   }
   const stripe = getStripe();
   const charge = Math.min(amount, hold.amount);
+  // Capturing part of a hold lets go of the rest automatically.
   if (charge > 0) {
     await stripe.paymentIntents.capture(hold.stripePaymentIntentId, { amount_to_capture: charge });
-    await db.insert(payments).values({
-      bookingId,
-      kind: "deposit_capture",
-      method: "stripe",
-      amount: charge,
-      description: "Charged from the deposit",
-      createdById: staffId,
-    });
   } else {
     await stripe.paymentIntents.cancel(hold.stripePaymentIntentId);
-    await db.insert(payments).values({
-      bookingId,
-      kind: "deposit_release",
-      method: "stripe",
-      amount: hold.amount,
-      description: "Deposit released",
-      createdById: staffId,
-    });
   }
+  await db.insert(payments).values(
+    depositSettlementRows(hold.amount, charge, "Released on the card").map((row) => ({
+      ...row,
+      bookingId,
+      method: "stripe" as const,
+      createdById: staffId,
+    })),
+  );
   return charge;
 }
 

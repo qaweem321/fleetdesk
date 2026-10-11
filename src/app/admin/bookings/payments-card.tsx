@@ -15,8 +15,8 @@ const kindLabels = {
   payment: "Payment",
   refund: "Refund",
   deposit_hold: "Deposit held",
-  deposit_capture: "Deposit charged",
-  deposit_release: "Deposit released",
+  deposit_capture: "Deposit kept",
+  deposit_release: "Deposit given back",
 };
 
 const methodLabels = { stripe: "Online card", ...manualMethodLabels };

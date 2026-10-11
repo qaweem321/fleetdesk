@@ -3,6 +3,7 @@ import { and, eq } from "drizzle-orm";
 import { makeReference } from "../../lib/bookings/status";
 import { demoLogins } from "../../lib/demo";
 import { buildAgreementText } from "../../lib/operations/agreement";
+import { depositSettlementRows } from "../../lib/payments/ledger";
 import { calculateQuote } from "../../lib/pricing/quote";
 import { fromLocalInput, localDateKey } from "../../lib/time-zone";
 import { db } from "../index";
@@ -216,17 +217,17 @@ export async function seedBookings() {
       await db.insert(bookingCharges).values({
         bookingId: booking.id,
         kind: "fuel",
-        description: "Fuel: 2/8 of a tank less than at pickup",
+        description: "Fuel: 1/4 of a tank less than at pickup",
         amount: 2400,
       });
-      await db.insert(payments).values({
-        bookingId: booking.id,
-        kind: "deposit_capture",
-        method: "card_terminal",
-        amount: 2400,
-        description: "Kept from the deposit",
-        createdAt: plan.end,
-      });
+      await db.insert(payments).values(
+        depositSettlementRows(found.model.depositAmount, 2400, "Deposit given back").map((row) => ({
+          ...row,
+          bookingId: booking.id,
+          method: "card_terminal" as const,
+          createdAt: plan.end,
+        })),
+      );
       await db.update(vehicles).set({ mileage: back }).where(eq(vehicles.id, found.vehicle.id));
     }
   }

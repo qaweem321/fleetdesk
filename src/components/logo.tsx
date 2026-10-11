@@ -12,9 +12,14 @@ type LogoProps = {
 };
 
 // Inside the admin area it links to the admin home; on public pages to the home page.
+// A long business name takes at most two smaller lines on phones instead of pushing the menu.
 export function Logo({ name, logoUrl, href = "/", className, onClick }: LogoProps) {
   return (
-    <Link href={href} onClick={onClick} className={cn("text-lg font-bold", className)}>
+    <Link
+      href={href}
+      onClick={onClick}
+      className={cn("min-w-0 line-clamp-2 text-base leading-tight font-bold sm:text-lg", className)}
+    >
       {logoUrl ? (
         // biome-ignore lint/performance/noImgElement: uploaded logos are served by our own /files route, so next/image adds nothing
         <img src={logoUrl} alt={name} className="h-8 w-auto max-w-44 object-contain" />

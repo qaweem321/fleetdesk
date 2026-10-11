@@ -60,7 +60,7 @@ export const carModels = pgTable("car_models", {
   // Prices in cents. Rentals of 7 days or more use the weekly price, spread over the days.
   dailyRate: integer("daily_rate").notNull().default(0),
   weeklyRate: integer("weekly_rate"),
-  // Held on the customer's card at pickup and released after a clean return.
+  // Taken at pickup (held on the saved card or paid at the counter), given back after the return.
   depositAmount: integer("deposit_amount").notNull().default(0),
   // Distance included per rental day (empty = unlimited) and the price per extra km or mile.
   includedDistancePerDay: integer("included_distance_per_day"),

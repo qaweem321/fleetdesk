@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { paymentSentence } from "./wording";
+import { depositSentence, paymentSentence } from "./wording";
 
 const booking = {
   status: "confirmed" as const,
@@ -57,4 +57,11 @@ test("cancelled: refunded, not refunded, or nothing paid", () => {
 
 test("never says 'at pickup' once the car is out", () => {
   assert.equal(paymentSentence({ ...booking, status: "active" }), "Still to pay: $200.63.");
+});
+
+test("the deposit sentence is true whether it's held on a card or paid at the counter", () => {
+  assert.equal(
+    depositSentence(25000, "USD"),
+    "A deposit of $250.00 is taken at pickup and given back after the return, minus any extra charges.",
+  );
 });
