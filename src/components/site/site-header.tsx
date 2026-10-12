@@ -9,6 +9,9 @@ import { fileUrl } from "@/lib/storage";
 const linkClasses = "whitespace-nowrap text-sm text-muted-foreground hover:text-foreground";
 // Keeps "Sign up" and "My bookings" on one line on narrow phones.
 const buttonClasses = "whitespace-nowrap px-3 sm:px-4";
+// On the narrowest screens (under 360px) the business name needs the room more than "Cars",
+// which the home page lists anyway.
+const carsLinkClasses = `hidden min-[360px]:inline ${linkClasses}`;
 
 // The top bar of every public page. Logged-in people get a link to their own area instead of
 // "Log in / Sign up".
@@ -17,13 +20,14 @@ export async function SiteHeader({ settings }: { settings: BusinessSettings }) {
 
   return (
     <header className="border-b border-border print:hidden">
-      <nav className="mx-auto max-w-6xl px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
+      <nav className="mx-auto max-w-6xl px-4 sm:px-6 h-16 flex items-center justify-between gap-3 sm:gap-4">
         <Logo
           name={settings.businessName}
           logoUrl={settings.logoFileId ? fileUrl(settings.logoFileId) : null}
+          className="max-[359px]:text-sm"
         />
         <div className="flex shrink-0 items-center gap-3 sm:gap-4">
-          <Link href="/cars" className={linkClasses}>
+          <Link href="/cars" className={carsLinkClasses}>
             Cars
           </Link>
           {user ? (
