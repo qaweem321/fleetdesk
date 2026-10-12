@@ -107,3 +107,13 @@ export function parseDriverInput(
   }
   return { values: { dateOfBirth, licenseNumber, licenseCountry, licenseExpiresOn } };
 }
+
+// The date of birth Stripe read from the license ("1990-05-17"), or null.
+export function verifiedDateOfBirth(
+  dob: { day: number | null; month: number | null; year: number | null } | null | undefined,
+) {
+  if (!dob?.year || !dob.month || !dob.day) {
+    return null;
+  }
+  return `${dob.year}-${String(dob.month).padStart(2, "0")}-${String(dob.day).padStart(2, "0")}`;
+}

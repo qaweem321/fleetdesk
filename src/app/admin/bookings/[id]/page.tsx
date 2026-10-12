@@ -13,13 +13,16 @@ import { SubmitButton } from "@/components/ui/submit-button";
 import { getBooking } from "@/lib/bookings/queries";
 import { staffCanCancel } from "@/lib/bookings/status";
 import { formatDateTime } from "@/lib/format";
-import { formatMoney } from "@/lib/money";
+import { formatMoney, moneyInputValue } from "@/lib/money";
+import { hasCardDeposit } from "@/lib/payments/deposits";
+import { bookingLedger } from "@/lib/payments/records";
 import { can } from "@/lib/permissions";
 import { requireStaff } from "@/lib/session";
 import { requireSettings } from "@/lib/settings";
 import { isUuid } from "@/lib/uuid";
 import { staffCancelBooking } from "../actions";
 import { PaymentsCard } from "../payments-card";
+import { settleDepositAfterReturn } from "./return/actions";
 
 export const metadata: Metadata = { title: "Booking" };
 
@@ -41,6 +44,11 @@ export default async function StaffBookingPage({ params, searchParams }: Props) 
   if (!booking) {
     notFound();
   }
+  // A card deposit still held after the return (Stripe couldn't be reached at the time).
+  const openDeposit =
+    booking.status === "completed" && (await hasCardDeposit(booking.id))
+      ? await bookingLedger(booking.id, booking.total)
+      : null;
 
   return (
     <div className="max-w-4xl space-y-6">
@@ -55,11 +63,47 @@ export default async function StaffBookingPage({ params, searchParams }: Props) 
         }
       />
 
+      {query.hold === "unsettled" && (
+        <p role="status" className="rounded-xl border border-warning/40 bg-warning/10 p-4 text-sm">
+          The car is back, but Stripe couldn&apos;t be reached to settle the deposit on the card.
+          Settle it below.
+        </p>
+      )}
       {query.hold === "expired" && (
         <p role="status" className="rounded-xl border border-warning/40 bg-warning/10 p-4 text-sm">
           The hold on the customer&apos;s card had expired, so nothing could be charged from the
           deposit. Collect what&apos;s still to pay below and record it.
         </p>
+      )}
+
+      {openDeposit && openDeposit.depositHeld > 0 && (
+        <Card title="Settle the deposit">
+          <p className="text-sm text-muted-foreground">
+            {formatMoney(openDeposit.depositHeld, booking.currency)} is still held on the
+            customer&apos;s card, and the customer owes{" "}
+            {formatMoney(openDeposit.due, booking.currency)}. What you don&apos;t keep goes back to
+            the card.
+          </p>
+          <ActionForm action={settleDepositAfterReturn} className="mt-3 space-y-3">
+            <input type="hidden" name="id" value={booking.id} />
+            <Field label="Keep from the deposit" htmlFor="deposit-keep">
+              <Input
+                id="deposit-keep"
+                name="depositKeep"
+                inputMode="decimal"
+                defaultValue={moneyInputValue(
+                  Math.min(openDeposit.due, openDeposit.depositHeld),
+                  booking.currency,
+                )}
+                className="w-40"
+              />
+            </Field>
+            <ActionMessage />
+            <SubmitButton pendingText="Settling..." confirm="Settle the deposit on the card now?">
+              Settle deposit
+            </SubmitButton>
+          </ActionForm>
+        </Card>
       )}
 
       {booking.status === "confirmed" && (

@@ -12,7 +12,7 @@ import { parseMoney } from "@/lib/money";
 import { DEFAULT_AGREEMENT_TERMS } from "@/lib/operations/agreement";
 import { requireStaff } from "@/lib/session";
 import { requireSettings, settingsChanged } from "@/lib/settings";
-import { deleteFiles } from "@/lib/storage";
+import { deleteUnusedFiles } from "@/lib/storage";
 import { isUuid } from "@/lib/uuid";
 
 // The logo must be a public photo that exists (ids come from the browser).
@@ -58,9 +58,9 @@ export async function updateSettings(
     .update(businessSettings)
     .set({ ...parsed.values, logoFileId: logo.logoFileId, updatedAt: new Date() })
     .where(eq(businessSettings.id, 1));
-  // A replaced or removed logo is no longer used anywhere.
+  // A replaced or removed logo is deleted, unless it's also a car photo.
   if (current.logoFileId && current.logoFileId !== logo.logoFileId) {
-    await deleteFiles([current.logoFileId]);
+    await deleteUnusedFiles([current.logoFileId]);
   }
   settingsChanged();
   revalidatePath("/", "layout");

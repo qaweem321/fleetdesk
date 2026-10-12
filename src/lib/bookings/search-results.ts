@@ -6,7 +6,6 @@ import { listSeasons } from "@/lib/pricing/queries";
 import { calculateQuote } from "@/lib/pricing/quote";
 import type { BusinessSettings } from "@/lib/settings";
 import { availableModels, bookingWindow } from "./availability";
-import { releaseExpiredHolds } from "./cancel";
 import type { ParsedSearch } from "./search";
 
 // The cars free for a search, each with its price for those dates (without extras). Uses the
@@ -17,7 +16,6 @@ export async function searchCars(
   onlyModelId?: string,
 ) {
   const { query, start, end } = search;
-  await releaseExpiredHolds();
   const window = bookingWindow(start, end, settings.turnaroundMinutes);
   const [models, seasonRules, [dropOff]] = await Promise.all([
     availableModels(query.pickupLocationId, window),

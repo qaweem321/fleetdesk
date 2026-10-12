@@ -11,7 +11,7 @@ import { parseCarModelInput } from "@/lib/fleet/input";
 import { formReader } from "@/lib/form-input";
 import { requireStaff } from "@/lib/session";
 import { requireSettings } from "@/lib/settings";
-import { deleteFiles } from "@/lib/storage";
+import { deleteUnusedFiles } from "@/lib/storage";
 import { isUuid } from "@/lib/uuid";
 
 const LIST = "/admin/cars";
@@ -65,7 +65,7 @@ async function savePhotos(id: string, photoIds: string[]) {
   const removed = before
     .map((photo) => photo.fileId)
     .filter((fileId) => !photoIds.includes(fileId));
-  await deleteFiles(removed);
+  await deleteUnusedFiles(removed);
 }
 
 export async function createCarModel(
@@ -139,7 +139,7 @@ export async function deleteCarModel(
     }
     throw error;
   }
-  await deleteFiles(photos.map((photo) => photo.fileId));
+  await deleteUnusedFiles(photos.map((photo) => photo.fileId));
   revalidatePath(LIST);
   redirect(LIST);
 }

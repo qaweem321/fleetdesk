@@ -5,6 +5,7 @@ import { driverProfiles } from "@/db/schema";
 import { stripeConfigured } from "@/lib/payments/options";
 import { getStripe } from "@/lib/payments/stripe";
 import type { BusinessSettings } from "@/lib/settings";
+import { verifiedDateOfBirth } from "./rules";
 
 // Stripe Identity: the customer photographs their license and takes a selfie; Stripe checks the
 // license is real and the face matches. Optional (Settings), because Stripe charges per check.
@@ -40,20 +41,31 @@ export async function startIdentityCheck(userId: string) {
   return session.url;
 }
 
-// Stripe confirmed the identity: the driver is approved, no staff review needed.
+// Stripe confirmed the identity: the driver is approved, no staff review needed. The age rules
+// use the date of birth on the license, not the one the customer typed. If Stripe didn't read
+// one, staff check the license instead.
 export async function identityVerified(sessionId: string) {
+  const session = await getStripe().identity.verificationSessions.retrieve(sessionId, {
+    expand: ["verified_outputs"],
+  });
+  const dateOfBirth = verifiedDateOfBirth(session.verified_outputs?.dob);
   const now = new Date();
   await db
     .update(driverProfiles)
-    .set({
-      status: "approved",
-      verifiedBy: "stripe_identity",
-      reviewNote: null,
-      reviewedById: null,
-      reviewedAt: now,
-      submittedAt: now,
-      updatedAt: now,
-    })
+    .set(
+      dateOfBirth
+        ? {
+            status: "approved",
+            dateOfBirth,
+            verifiedBy: "stripe_identity",
+            reviewNote: null,
+            reviewedById: null,
+            reviewedAt: now,
+            submittedAt: now,
+            updatedAt: now,
+          }
+        : { status: "pending", verifiedBy: null, submittedAt: now, updatedAt: now },
+    )
     .where(eq(driverProfiles.stripeVerificationSessionId, sessionId));
 }
 

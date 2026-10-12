@@ -1,16 +1,16 @@
-import { and, eq, gt, isNull, lt, lte, type SQL, sql } from "drizzle-orm";
+import { and, eq, gt, inArray, isNull, lt, lte, type SQL, sql } from "drizzle-orm";
 import { absoluteUrl } from "@/config/site";
 import { db } from "@/db";
 import { bookings, businessSettings, files } from "@/db/schema";
 import { releaseExpiredHolds } from "@/lib/bookings/cancel";
-import { getBooking } from "@/lib/bookings/queries";
+import { listBookingsByIds } from "@/lib/bookings/queries";
 import { buttonEmailHtml, type Email, sendEmails } from "@/lib/email";
 import { formatDateTime } from "@/lib/format";
 import { listOpenTasks } from "@/lib/maintenance/queries";
 import { today } from "@/lib/reports/period";
 import { counterToday } from "@/lib/reports/queries";
 import type { BusinessSettings } from "@/lib/settings";
-import { deleteFiles } from "@/lib/storage";
+import { deleteFiles, fileNotInUse } from "@/lib/storage";
 import { localDateKey } from "@/lib/time-zone";
 
 const DAY = 86_400_000;
@@ -18,14 +18,24 @@ const DAY = 86_400_000;
 type ReminderField = "pickupReminderSentAt" | "returnReminderSentAt";
 
 // Marks bookings as reminded and returns them, in one statement: if the job runs twice at the
-// same time, each booking is still reminded once.
+// same time, each booking is still reminded once. Then loads them all in one query.
 async function claim(field: ReminderField, condition: SQL | undefined, now: Date) {
   const claimed = await db
     .update(bookings)
     .set({ [field]: now })
     .where(and(condition, isNull(bookings[field])))
     .returning({ id: bookings.id });
-  return Promise.all(claimed.map((row) => getBooking(row.id)));
+  return listBookingsByIds(claimed.map((row) => row.id));
+}
+
+// The reminders couldn't be sent: unmark them, so the next run tries again.
+async function unclaim(field: ReminderField, ids: string[], now: Date) {
+  if (ids.length > 0) {
+    await db
+      .update(bookings)
+      .set({ [field]: null })
+      .where(and(inArray(bookings.id, ids), eq(bookings[field], now)));
+  }
 }
 
 function reminderEmail(
@@ -72,32 +82,44 @@ async function customerReminders(settings: BusinessSettings, now: Date) {
   const when = (date: Date) => formatDateTime(date, settings.timeZone);
   const emails: Email[] = [];
   for (const booking of pickups) {
-    if (booking) {
-      emails.push(
-        reminderEmail(
-          booking.customerEmail,
-          `See you soon: your ${booking.make} ${booking.model}`,
-          `Hi ${booking.customerName}, your pickup is on ${when(booking.pickupAt)} at ${booking.pickupLocationName}${booking.pickupLocationAddress ? ` (${booking.pickupLocationAddress})` : ""}. Please bring your driver's license and a payment card in your name.`,
-          absoluteUrl(`/account/bookings/${booking.id}`),
-          settings,
-        ),
-      );
-    }
+    emails.push(
+      reminderEmail(
+        booking.customerEmail,
+        `See you soon: your ${booking.make} ${booking.model}`,
+        `Hi ${booking.customerName}, your pickup is on ${when(booking.pickupAt)} at ${booking.pickupLocationName}${booking.pickupLocationAddress ? ` (${booking.pickupLocationAddress})` : ""}. Please bring your driver's license and a payment card in your name.`,
+        absoluteUrl(`/account/bookings/${booking.id}`),
+        settings,
+      ),
+    );
   }
   for (const booking of returns) {
-    if (booking) {
-      emails.push(
-        reminderEmail(
-          booking.customerEmail,
-          "Reminder: your car is due back",
-          `Hi ${booking.customerName}, please return the ${booking.make} ${booking.model} by ${when(booking.returnAt)} at ${booking.returnLocationName}, with the same fuel level as at pickup.`,
-          absoluteUrl(`/account/bookings/${booking.id}`),
-          settings,
-        ),
-      );
-    }
+    emails.push(
+      reminderEmail(
+        booking.customerEmail,
+        "Reminder: your car is due back",
+        `Hi ${booking.customerName}, please return the ${booking.make} ${booking.model} by ${when(booking.returnAt)} at ${booking.returnLocationName}, with the same fuel level as at pickup.`,
+        absoluteUrl(`/account/bookings/${booking.id}`),
+        settings,
+      ),
+    );
   }
-  await sendEmails(emails);
+  try {
+    await sendEmails(emails);
+  } catch (error) {
+    await Promise.all([
+      unclaim(
+        "pickupReminderSentAt",
+        pickups.map((booking) => booking.id),
+        now,
+      ),
+      unclaim(
+        "returnReminderSentAt",
+        returns.map((booking) => booking.id),
+        now,
+      ),
+    ]);
+    throw error;
+  }
   return emails.length;
 }
 
@@ -156,13 +178,22 @@ async function staffSummary(settings: BusinessSettings, now: Date) {
       ),
     );
   }
-  await sendEmails([
-    {
-      to: settings.contactEmail,
-      subject: `Today at ${settings.businessName}`,
-      text: `${lines.join("\n")}\n\n${absoluteUrl("/admin")}`,
-    },
-  ]);
+  try {
+    await sendEmails([
+      {
+        to: settings.contactEmail,
+        subject: `Today at ${settings.businessName}`,
+        text: `${lines.join("\n")}\n\n${absoluteUrl("/admin")}`,
+      },
+    ]);
+  } catch (error) {
+    // Not sent: the next run may try again today.
+    await db
+      .update(businessSettings)
+      .set({ summarySentOn: null })
+      .where(eq(businessSettings.summarySentOn, todayKey));
+    throw error;
+  }
   return true;
 }
 
@@ -171,16 +202,7 @@ async function deleteUnusedUploads(now: Date) {
   const unused = await db
     .select({ id: files.id })
     .from(files)
-    .where(
-      and(
-        lt(files.createdAt, new Date(now.getTime() - DAY)),
-        sql`not exists (select 1 from car_model_photos where file_id = ${files.id})`,
-        sql`not exists (select 1 from inspection_photos where file_id = ${files.id})`,
-        sql`not exists (select 1 from agreements where signature_file_id = ${files.id})`,
-        sql`not exists (select 1 from business_settings where logo_file_id = ${files.id})`,
-        sql`not exists (select 1 from driver_profiles where ${files.id} in (license_front_file_id, license_back_file_id, id_document_file_id))`,
-      ),
-    )
+    .where(and(lt(files.createdAt, new Date(now.getTime() - DAY)), fileNotInUse()))
     .limit(500);
   await deleteFiles(unused.map((file) => file.id));
   return unused.length;

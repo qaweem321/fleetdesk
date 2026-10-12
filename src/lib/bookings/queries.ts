@@ -45,6 +45,11 @@ export async function getBooking(id: string, customerId?: string) {
   return booking ? { ...booking, extras } : null;
 }
 
+// Several bookings with their names, in one query (without extras).
+export async function listBookingsByIds(ids: string[]) {
+  return ids.length === 0 ? [] : bookingWithNames().where(inArray(bookings.id, ids));
+}
+
 export async function listCustomerBookings(customerId: string) {
   return bookingWithNames()
     .where(eq(bookings.customerId, customerId))

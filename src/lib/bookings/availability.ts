@@ -17,7 +17,9 @@ export function bookingWindow(start: Date, end: Date, turnaroundMinutes: number)
   return { start, readyAt: new Date(end.getTime() + turnaroundMinutes * MINUTE) };
 }
 
-// SQL: the vehicle in the outer query is free during the window.
+// SQL: the vehicle in the outer query is free during the window. A booking whose online payment
+// didn't come in time doesn't count (it's cancelled before any new booking is saved), so
+// searching never has to write to the database first.
 function isFree(window: Window) {
   const range = sql`tstzrange(${window.start.toISOString()}, ${window.readyAt.toISOString()}, '[)')`;
   const statuses = sql.join(
@@ -28,6 +30,7 @@ function isFree(window: Window) {
       select 1 from ${bookings} as b
       where b.vehicle_id = ${qualified(vehicles.id)}
         and b.status in (${statuses})
+        and not (b.status = 'pending_payment' and b.hold_expires_at < now())
         and tstzrange(b.pickup_at, b.ready_at, '[)') && ${range}
     ) and not exists (
       select 1 from ${vehicleBlocks} as k

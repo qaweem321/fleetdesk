@@ -37,7 +37,8 @@ Read the docs that ship with the package before using a Next.js API:
   Roles: `customer` (everyone who signs up), `agent`, `manager`, `owner`.
 - `src/lib/settings.ts`: `getSettings()` / `requireSettings()` (cached; call `settingsChanged()`
   after writing `business_settings`).
-- `src/lib/storage/`: uploads. `saveImage()`, `deleteFiles()`, `fileUrl()`; files are served by
+- `src/lib/storage/`: uploads. `saveImage()`, `deleteUnusedFiles()` (use it when a photo is
+  replaced: it keeps files something else still uses), `fileUrl()`; files are served by
   `src/app/files/[id]/route.ts`, which checks who may see private files.
 - `src/lib/fleet/`: locations, car models (what customers book) and vehicles (number plates):
   `input.ts` (form checks), `queries.ts` (reads), `labels.ts` (names for fixed choices).

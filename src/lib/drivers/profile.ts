@@ -1,7 +1,7 @@
 import { and, eq, inArray, isNull } from "drizzle-orm";
 import { db } from "@/db";
 import { driverProfiles, files } from "@/db/schema";
-import { deleteFiles, fileUrl } from "@/lib/storage";
+import { deleteUnusedFiles, fileUrl } from "@/lib/storage";
 import { isUuid } from "@/lib/uuid";
 import type { DriverInput } from "./rules";
 
@@ -29,8 +29,9 @@ export function documentPhotos(profile: DriverProfile | null) {
   ) as Record<DocumentField, { id: string; url: string } | null>;
 }
 
-// Only the customer's own private uploads can be attached to their profile (ids come from the
-// browser).
+// Only private photos the customer uploaded themselves can be attached to their profile (ids
+// come from the browser). Files staff uploaded for them, like inspection photos or a signature
+// taken at the counter, are theirs to see but not to reuse.
 export async function ownDocumentIds(userId: string, ids: (string | null)[]) {
   const candidates = ids.filter((id): id is string => Boolean(id && isUuid(id)));
   if (candidates.length === 0) {
@@ -43,6 +44,7 @@ export async function ownDocumentIds(userId: string, ids: (string | null)[]) {
       and(
         inArray(files.id, candidates),
         eq(files.ownerId, userId),
+        eq(files.uploadedById, userId),
         eq(files.visibility, "private"),
       ),
     );
@@ -50,7 +52,8 @@ export async function ownDocumentIds(userId: string, ids: (string | null)[]) {
 }
 
 // Saves the driver's details and documents and sends them for checking (again): any earlier
-// decision no longer applies to the new details. Replaced photos are deleted.
+// decision no longer applies to the new details. Replaced photos are deleted unless something
+// else (an inspection, an agreement) still uses them.
 export async function submitDriverDetails(
   userId: string,
   values: DriverInput,
@@ -76,7 +79,7 @@ export async function submitDriverDetails(
   const replaced = DOCUMENT_FIELDS.map((field) => before?.[field] ?? null).filter(
     (id): id is string => Boolean(id) && !Object.values(documents).includes(id),
   );
-  await deleteFiles(replaced);
+  await deleteUnusedFiles(replaced);
 }
 
 // A date of birth given while booking (the rest of the details can come later). Only fills in

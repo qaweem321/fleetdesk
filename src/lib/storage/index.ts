@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { eq, inArray } from "drizzle-orm";
+import { and, eq, inArray, type SQL, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { files } from "@/db/schema";
 import { isStaff, type Role } from "@/lib/permissions";
@@ -103,6 +103,31 @@ export async function deleteFiles(ids: string[]) {
     ),
   );
   await db.delete(files).where(inArray(files.id, ids));
+}
+
+// True when nothing (a car, an inspection, an agreement, the logo, a driver profile) uses the
+// file. Ids come from the browser in several forms, so a file is only ever deleted when this holds.
+export function fileNotInUse(): SQL {
+  return and(
+    sql`not exists (select 1 from car_model_photos where file_id = ${files.id})`,
+    sql`not exists (select 1 from inspection_photos where file_id = ${files.id})`,
+    sql`not exists (select 1 from agreements where signature_file_id = ${files.id})`,
+    sql`not exists (select 1 from business_settings where logo_file_id = ${files.id})`,
+    sql`not exists (select 1 from driver_profiles where ${files.id} in (license_front_file_id, license_back_file_id, id_document_file_id))`,
+  ) as SQL;
+}
+
+// Deletes the files that are no longer used anywhere and keeps the rest (for example a photo
+// that was also picked somewhere else).
+export async function deleteUnusedFiles(ids: string[]) {
+  if (ids.length === 0) {
+    return;
+  }
+  const unused = await db
+    .select({ id: files.id })
+    .from(files)
+    .where(and(inArray(files.id, ids), fileNotInUse()));
+  await deleteFiles(unused.map((file) => file.id));
 }
 
 // Where the browser loads a file from (src/app/files/[id]/route.ts checks who may see it).

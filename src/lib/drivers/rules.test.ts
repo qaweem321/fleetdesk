@@ -1,6 +1,12 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { ageOn, driverAgeProblem, driverReadinessProblems, parseDriverInput } from "./rules";
+import {
+  ageOn,
+  driverAgeProblem,
+  driverReadinessProblems,
+  parseDriverInput,
+  verifiedDateOfBirth,
+} from "./rules";
 
 test("counts whole years, turning older on the birthday itself", () => {
   assert.equal(ageOn("2000-05-17", "2025-05-16"), 24);
@@ -78,4 +84,11 @@ test("explains what's wrong with driver details", () => {
     assert.ok("error" in result, String(message));
     assert.match(result.error, message);
   }
+});
+
+test("the date of birth Stripe read from the license", () => {
+  assert.equal(verifiedDateOfBirth({ day: 7, month: 5, year: 1990 }), "1990-05-07");
+  assert.equal(verifiedDateOfBirth({ day: null, month: 5, year: 1990 }), null);
+  assert.equal(verifiedDateOfBirth(null), null);
+  assert.equal(verifiedDateOfBirth(undefined), null);
 });

@@ -56,6 +56,14 @@ First public version.
 - The "Log in" / "Sign up" links keep where you were going (for example an invitation).
 - `docker-compose.yml` only exposes the app to the same machine (the proxy); one failed email
   batch no longer stops the rest; `npm run db:seed` refuses a database with real accounts.
+- Customers can only attach license photos they uploaded themselves, and a replaced photo is
+  only deleted when nothing else (an inspection, an agreement, a car, the logo) uses it.
+- Two people finishing the setup wizard at the same moment can't both become owner.
+- Stricter login limits (per IP address and per account; not in demo mode, where the sample
+  logins are shared).
+- Searching for cars no longer writes to the database; loading screens on the public and
+  account pages; an error page also when the root layout fails.
+- The Docker build works (it needed a `public/` folder).
 
 ### Shipping
 - Docker setup with Postgres, migrations, a photo volume and the daily job; Caddy example;
@@ -93,7 +101,8 @@ First public version.
   photos of the license (front and back) and an optional ID.
 - Staff check them under Customers: accept, or ask to fix with a reason (emailed).
 - Minimum driver age, checked when booking (date of birth asked if unknown) and at pickup.
-- Optional automatic ID check with Stripe Identity (license + selfie).
+- Optional automatic ID check with Stripe Identity (license + selfie). The age rules then use
+  the date of birth on the license; without one, staff check it.
 
 ### At the counter
 - Pickup: driver check (or check the license in person), swap to another free car of the same
@@ -101,7 +110,9 @@ First public version.
   counter), and the rental agreement signed on screen.
 - Return: mileage, fuel, photos, return location; suggested charges for extra distance, missing
   fuel and late return, plus damage or other charges; part of the deposit kept, the rest
-  released; the car moves to the return location (or to maintenance).
+  released; the car moves to the return location (or to maintenance). If Stripe can't be
+  reached, the booking page lets staff settle the card deposit later.
+- A retried pickup holds the deposit on the card again (never reuses the cancelled hold).
 - Printable signed agreement and receipt, for staff and the customer. Emails with the agreement
   at pickup and the receipt at return.
 - Rental terms and fuel charge under Settings.
@@ -113,6 +124,6 @@ First public version.
   today's pickups and returns.
 - Reports: income, bookings, booking value and utilization per car model, for the last 30 days,
   this month or last month.
-- Daily job: pickup and return reminder emails (sent once), a morning summary for the
-  business (once a day, however often the job runs), and cleanup of photos that were
-  uploaded but never used.
+- Daily job: pickup and return reminder emails (sent once, tried again if sending failed), a
+  morning summary for the business (once a day, however often the job runs), and cleanup of
+  photos that were uploaded but never used.

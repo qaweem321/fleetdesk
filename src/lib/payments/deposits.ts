@@ -1,4 +1,4 @@
-import { and, desc, eq } from "drizzle-orm";
+import { and, count, desc, eq, inArray } from "drizzle-orm";
 import Stripe from "stripe";
 import { db } from "@/db";
 import { bookings, payments, users } from "@/db/schema";
@@ -30,11 +30,26 @@ export async function holdDepositOnSavedCard({
   currency,
   staffId,
 }: Hold): Promise<string | null> {
-  const [found] = await db
-    .select({ paymentMethodId: bookings.stripePaymentMethodId, customerId: users.stripeCustomerId })
-    .from(bookings)
-    .leftJoin(users, eq(users.id, bookings.customerId))
-    .where(eq(bookings.id, bookingId));
+  const [[found], [earlier]] = await Promise.all([
+    db
+      .select({
+        paymentMethodId: bookings.stripePaymentMethodId,
+        customerId: users.stripeCustomerId,
+      })
+      .from(bookings)
+      .leftJoin(users, eq(users.id, bookings.customerId))
+      .where(eq(bookings.id, bookingId)),
+    db
+      .select({ holds: count() })
+      .from(payments)
+      .where(
+        and(
+          eq(payments.bookingId, bookingId),
+          eq(payments.kind, "deposit_hold"),
+          eq(payments.method, "stripe"),
+        ),
+      ),
+  ]);
   if (!found?.paymentMethodId || !found.customerId) {
     return "There's no saved card for this booking. Take the deposit at the counter.";
   }
@@ -51,9 +66,14 @@ export async function holdDepositOnSavedCard({
         description: "Deposit",
         metadata: { bookingId, purpose: "deposit" },
       },
-      { idempotencyKey: `deposit-${bookingId}` },
+      // Numbered by earlier holds: two staff finishing the same pickup at once get one hold, but
+      // a retry after a failed pickup (whose hold was let go) gets a new one, not the cancelled one.
+      { idempotencyKey: `deposit-${bookingId}-${earlier?.holds ?? 0}` },
     );
-    // A retried pickup gets the same hold back from Stripe (idempotency key): record it once.
+    if (intent.status !== "requires_capture") {
+      return "The deposit couldn't be held on the card. Take the deposit at the counter.";
+    }
+    // Two pickups at once get the same hold back from Stripe (idempotency key): record it once.
     const [recorded] = await db
       .select({ id: payments.id })
       .from(payments)
@@ -79,21 +99,22 @@ export async function holdDepositOnSavedCard({
   }
 }
 
-// The open deposit hold on the card, if any.
+// The open deposit hold on the card, if any: the latest card hold, unless it was charged or let
+// go since (a failed pickup lets go of its hold, and the retry may take the deposit at the counter).
 async function openStripeHold(bookingId: string) {
-  const [hold] = await db
+  const [latest] = await db
     .select()
     .from(payments)
     .where(
       and(
         eq(payments.bookingId, bookingId),
-        eq(payments.kind, "deposit_hold"),
         eq(payments.method, "stripe"),
+        inArray(payments.kind, ["deposit_hold", "deposit_capture", "deposit_release"]),
       ),
     )
     .orderBy(desc(payments.createdAt))
     .limit(1);
-  return hold ?? null;
+  return latest?.kind === "deposit_hold" ? latest : null;
 }
 
 // At the return: charge `amount` (0 to the held amount) from a held card deposit and let go of

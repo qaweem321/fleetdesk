@@ -7,6 +7,7 @@ import * as schema from "@/db/schema";
 import { accountDeletionBlockers } from "@/lib/account";
 import { DEMO_DISABLED_MESSAGE, isDemoLogin, isDemoMode } from "@/lib/demo";
 import { buttonEmailHtml, sendEmail } from "@/lib/email";
+import { checkLoginAttempts, loginRateRules } from "@/lib/login-limit";
 import { cleanUserName } from "@/lib/user-name";
 
 // Names are checked here, on the server, for signup and for changes on the Account page.
@@ -91,6 +92,7 @@ export const auth = betterAuth({
   hooks: {
     // In the live demo, the shared sample logins can't be locked or deleted by a visitor.
     before: createAuthMiddleware(async (ctx) => {
+      await checkLoginAttempts(ctx.path, ctx.body);
       if (!PROTECTED_DEMO_PATHS.includes(ctx.path)) {
         return;
       }
@@ -113,6 +115,6 @@ export const auth = betterAuth({
       },
     },
   },
-  rateLimit: { storage: "database" },
+  rateLimit: { storage: "database", customRules: loginRateRules },
   plugins: [nextCookies()],
 });

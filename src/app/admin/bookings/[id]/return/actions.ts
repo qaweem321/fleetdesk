@@ -23,7 +23,7 @@ import { formatMoney, parseMoney } from "@/lib/money";
 import { sendRentalCompletedEmail } from "@/lib/notifications/booking-emails";
 import { parseChargeLines, parseInspectionInput } from "@/lib/operations/input";
 import { getInspections } from "@/lib/operations/queries";
-import { settleCardDeposit } from "@/lib/payments/deposits";
+import { hasCardDeposit, settleCardDeposit } from "@/lib/payments/deposits";
 import { depositSettlementRows } from "@/lib/payments/ledger";
 import { bookingLedger } from "@/lib/payments/records";
 import { requireStaff } from "@/lib/session";
@@ -153,10 +153,18 @@ export async function completeReturn(
     throw error;
   }
 
+  // The booking is completed now. If Stripe can't be reached for the card deposit, the hold
+  // stays open and the booking page offers to settle it again.
   let holdExpired = false;
+  let unsettled = false;
   if (deposit && ledger.depositHeld > 0) {
     if (deposit.method === "stripe") {
-      holdExpired = (await settleCardDeposit(booking.id, keep, staff.id))?.holdExpired ?? false;
+      try {
+        holdExpired = (await settleCardDeposit(booking.id, keep, staff.id))?.holdExpired ?? false;
+      } catch (error) {
+        console.error("Settling the card deposit failed:", error);
+        unsettled = true;
+      }
     } else {
       await db.insert(payments).values(
         depositSettlementRows(ledger.depositHeld, keep, "Deposit given back").map((row) => ({
@@ -176,5 +184,43 @@ export async function completeReturn(
     }
   });
   // An expired card hold couldn't be charged: the booking page says to collect it.
-  redirect(`/admin/bookings/${booking.id}?returned=1${holdExpired ? "&hold=expired" : ""}`);
+  const hold = unsettled ? "&hold=unsettled" : holdExpired ? "&hold=expired" : "";
+  redirect(`/admin/bookings/${booking.id}?returned=1${hold}`);
+}
+
+// After a return whose card deposit couldn't be settled (Stripe was unreachable): settles it
+// now, keeping at most what was held and what the customer still owes.
+export async function settleDepositAfterReturn(
+  _previous: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const bookingId = formData.get("id");
+  if (!isUuid(bookingId)) {
+    throw new Error("Booking not found.");
+  }
+  const [staff, booking] = await Promise.all([requireStaff(), getBooking(bookingId)]);
+  if (!booking) {
+    throw new Error("Booking not found.");
+  }
+  if (booking.status !== "completed" || !(await hasCardDeposit(booking.id))) {
+    return { error: "There's no deposit left to settle on this booking." };
+  }
+  const ledger = await bookingLedger(booking.id, booking.total);
+  const keep = parseMoney(formReader(formData)("depositKeep") || "0", booking.currency);
+  if (keep === null || keep > ledger.depositHeld) {
+    return { error: "The amount kept from the deposit can't be more than the deposit." };
+  }
+  if (keep > ledger.due) {
+    return {
+      error: `The customer owes ${formatMoney(ledger.due, booking.currency)}, so you can't keep more than that from the deposit.`,
+    };
+  }
+  let result: Awaited<ReturnType<typeof settleCardDeposit>>;
+  try {
+    result = await settleCardDeposit(booking.id, keep, staff.id);
+  } catch (error) {
+    console.error("Settling the card deposit failed:", error);
+    return { error: "Stripe couldn't be reached. Please try again in a moment." };
+  }
+  redirect(`/admin/bookings/${booking.id}${result?.holdExpired ? "?hold=expired" : ""}`);
 }
