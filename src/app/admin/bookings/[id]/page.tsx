@@ -23,8 +23,13 @@ import { PaymentsCard } from "../payments-card";
 
 export const metadata: Metadata = { title: "Booking" };
 
-export default async function StaffBookingPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
+type Props = {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+};
+
+export default async function StaffBookingPage({ params, searchParams }: Props) {
+  const [{ id }, query] = await Promise.all([params, searchParams]);
   if (!isUuid(id)) {
     notFound();
   }
@@ -49,6 +54,13 @@ export default async function StaffBookingPage({ params }: { params: Promise<{ i
           </span>
         }
       />
+
+      {query.hold === "expired" && (
+        <p role="status" className="rounded-xl border border-warning/40 bg-warning/10 p-4 text-sm">
+          The hold on the customer&apos;s card had expired, so nothing could be charged from the
+          deposit. Collect what&apos;s still to pay below and record it.
+        </p>
+      )}
 
       {booking.status === "confirmed" && (
         <ButtonLink href={`/admin/bookings/${booking.id}/pickup`} size="lg">

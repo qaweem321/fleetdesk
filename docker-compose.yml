@@ -44,7 +44,9 @@ services:
     volumes:
       - uploads:/app/uploads
     ports:
-      - "3000:3000"
+      # Only this machine can reach the app directly; the internet goes through the proxy,
+      # so visitors can't fake their IP address (X-Forwarded-For) and skip rate limits.
+      - "127.0.0.1:3000:3000"
     depends_on:
       migrate:
         condition: service_completed_successfully

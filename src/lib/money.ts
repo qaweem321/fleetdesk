@@ -26,6 +26,9 @@ export function formatMoney(amount: number, currency: string) {
   return moneyFormatter(currency).format(amount / 10 ** currencyDecimals(currency));
 }
 
+// The largest amount (in the smallest unit) a price or payment can have.
+export const MONEY_MAX = 2_000_000_000;
+
 // "49.99" typed into a form -> 4999. Null for anything that isn't a plain amount
 // (negative, letters, too many decimals).
 export function parseMoney(text: string, currency: string): number | null {
@@ -36,7 +39,9 @@ export function parseMoney(text: string, currency: string): number | null {
     return null;
   }
   const [whole, fraction = ""] = value.split(".");
-  return Number(whole) * 10 ** decimals + Number(fraction.padEnd(decimals, "0") || 0);
+  const amount = Number(whole) * 10 ** decimals + Number(fraction.padEnd(decimals, "0") || 0);
+  // Amounts are stored in whole-number database columns, which stop at about 2.1 billion.
+  return amount <= MONEY_MAX ? amount : null;
 }
 
 // 4999 -> "49.99", the value to put back into a form field.

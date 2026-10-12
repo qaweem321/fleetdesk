@@ -1,4 +1,4 @@
-import { and, eq } from "drizzle-orm";
+import { and, eq, ne } from "drizzle-orm";
 import type Stripe from "stripe";
 import { absoluteUrl } from "@/config/site";
 import { db } from "@/db";
@@ -26,7 +26,10 @@ type Customer = { id: string; name: string; email: string };
 // stays open, so a payment can never arrive for a car that was let go.
 export async function startCheckout(booking: CheckoutBooking, customer: Customer) {
   const now = Date.now();
-  const customerId = await stripeCustomerFor(customer);
+  const [customerId, previousSessionId] = await Promise.all([
+    stripeCustomerFor(customer),
+    currentCheckoutSession(booking.id),
+  ]);
   const session = await getStripe().checkout.sessions.create({
     mode: "payment",
     customer: customerId,
@@ -64,10 +67,31 @@ export async function startCheckout(booking: CheckoutBooking, customer: Customer
       updatedAt: new Date(),
     })
     .where(and(eq(bookings.id, booking.id), eq(bookings.status, "pending_payment")));
+  // Only now that the new page is the booking's current one: its "expired" event is ignored.
+  if (previousSessionId) {
+    await closeCheckout(previousSessionId);
+  }
   if (!session.url) {
     throw new Error("Stripe didn't return a checkout page.");
   }
   return session.url;
+}
+
+async function currentCheckoutSession(bookingId: string) {
+  const [row] = await db
+    .select({ sessionId: bookings.stripeCheckoutSessionId })
+    .from(bookings)
+    .where(eq(bookings.id, bookingId));
+  return row?.sessionId ?? null;
+}
+
+// "Pay now" again: close the payment page opened before, so the booking can't be paid twice.
+// Fails harmlessly when that page already expired or was paid (then its payment is handled by
+// completeCheckout, which refunds a second payment).
+async function closeCheckout(sessionId: string) {
+  await getStripe()
+    .checkout.sessions.expire(sessionId)
+    .catch(() => undefined);
 }
 
 function idOf(value: string | { id: string } | null) {
@@ -117,19 +141,36 @@ export async function completeCheckout(
   if (confirmed.length > 0) {
     return { bookingId, confirmedNow: true };
   }
-  // Paid for a booking that was cancelled in the meantime (for example by staff): give the
-  // money back rather than keep it for a car the customer won't get.
-  const [booking] = await db
-    .select({ status: bookings.status })
-    .from(bookings)
-    .where(eq(bookings.id, bookingId));
+  // Paid for a booking that was cancelled in the meantime (for example by staff), or paid a
+  // second time on an older payment page: give the money back.
+  const [booking, [otherPayment]] = await Promise.all([
+    db
+      .select({ status: bookings.status })
+      .from(bookings)
+      .where(eq(bookings.id, bookingId))
+      .then((rows) => rows[0]),
+    db
+      .select({ id: payments.id })
+      .from(payments)
+      .where(
+        and(
+          eq(payments.bookingId, bookingId),
+          eq(payments.kind, "payment"),
+          eq(payments.method, "stripe"),
+          ne(payments.stripePaymentIntentId, intent.id),
+        ),
+      )
+      .limit(1),
+  ]);
   if (booking?.status === "cancelled") {
-    await refundIfNotYet(bookingId, intent);
+    await refundIfNotYet(bookingId, intent, "the booking was cancelled before the payment arrived");
+  } else if (otherPayment) {
+    await refundIfNotYet(bookingId, intent, "the booking was already paid");
   }
   return { bookingId, confirmedNow: false };
 }
 
-async function refundIfNotYet(bookingId: string, intent: Stripe.PaymentIntent) {
+async function refundIfNotYet(bookingId: string, intent: Stripe.PaymentIntent, why: string) {
   const refund = await getStripe().refunds.create(
     { payment_intent: intent.id },
     { idempotencyKey: `late-payment-refund-${intent.id}` },
@@ -141,7 +182,7 @@ async function refundIfNotYet(bookingId: string, intent: Stripe.PaymentIntent) {
       kind: "refund",
       method: "stripe",
       amount: refund.amount,
-      description: "Refund: the booking was cancelled before the payment arrived",
+      description: `Refund: ${why}`,
       stripePaymentIntentId: intent.id,
       stripeRefundId: refund.id,
     })
@@ -149,6 +190,11 @@ async function refundIfNotYet(bookingId: string, intent: Stripe.PaymentIntent) {
 }
 
 // Stripe closed the payment page without a payment: the car is let go right away.
-export async function expireCheckout(bookingId: string) {
+// Stripe's "payment page expired" event. Only the booking's current page counts: an older one
+// closed by "Pay now" must not cancel the booking.
+export async function expireCheckout(bookingId: string, sessionId: string) {
+  if ((await currentCheckoutSession(bookingId)) !== sessionId) {
+    return;
+  }
   await cancelBooking(bookingId, "The online payment wasn't completed in time.");
 }

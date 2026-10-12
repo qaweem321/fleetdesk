@@ -30,11 +30,18 @@ export async function refundOnlinePayments(bookingId: string, amount: number, re
     if (refundable <= 0) {
       continue;
     }
-    const refund = await getStripe().refunds.create({
-      payment_intent: payment.stripePaymentIntentId as string,
-      amount: refundable,
-      metadata: { bookingId },
-    });
+    // Safe to repeat: if the refund went through but wasn't recorded (or the request is sent
+    // twice), Stripe returns the same refund for the same payment, amount and refunds so far.
+    const refund = await getStripe().refunds.create(
+      {
+        payment_intent: payment.stripePaymentIntentId as string,
+        amount: refundable,
+        metadata: { bookingId },
+      },
+      {
+        idempotencyKey: `refund-${payment.stripePaymentIntentId}-${refundedAlready}-${refundable}`,
+      },
+    );
     await db
       .insert(payments)
       .values({

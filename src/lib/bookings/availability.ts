@@ -1,4 +1,4 @@
-import { and, asc, eq, getTableColumns, gt, lt, sql } from "drizzle-orm";
+import { and, asc, eq, getTableColumns, gt, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { qualified } from "@/db/qualified";
 import { bookings, carModels, vehicleBlocks, vehicles } from "@/db/schema";
@@ -34,20 +34,6 @@ function isFree(window: Window) {
       where k.vehicle_id = ${qualified(vehicles.id)}
         and tstzrange(k.starts_at, k.ends_at, '[)') && ${range}
     )`;
-}
-
-// Bookings waiting for an online payment that didn't come in time stop holding their car.
-// Run before checking availability, so an abandoned checkout never blocks a car for long.
-export async function releaseExpiredHolds(now = new Date()) {
-  await db
-    .update(bookings)
-    .set({
-      status: "cancelled",
-      cancelledAt: now,
-      cancelReason: "The online payment wasn't completed in time.",
-      updatedAt: now,
-    })
-    .where(and(eq(bookings.status, "pending_payment"), lt(bookings.holdExpiresAt, now)));
 }
 
 // Bookable car models with at least one free vehicle at the location, and how many are free.

@@ -49,7 +49,7 @@ export async function POST(request: Request) {
   } else if (event.type === "checkout.session.expired") {
     const bookingId = event.data.object.metadata?.bookingId;
     if (bookingId) {
-      await expireCheckout(bookingId);
+      await expireCheckout(bookingId, event.data.object.id);
     }
   }
   return new Response(null, { status: 200 });

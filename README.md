@@ -123,9 +123,13 @@ safe.
 add the environment variables, and deploy. Run `npm run db:migrate` once with the production
 `DATABASE_URL` (and again after each update).
 
+**Finish the setup wizard right after deploying:** until an owner exists, whoever opens `/setup`
+first becomes the owner.
+
 **Your own server with Docker**: `cp .env.example .env`, fill it in, then
 `docker compose up -d --build`. It starts Postgres, applies migrations, runs the app on port
-3000 and the daily job. Put a reverse proxy with HTTPS in front (`deploy/Caddyfile`).
+3000 (reachable from the same machine only) and the daily job. Put a reverse proxy with HTTPS in
+front (`deploy/Caddyfile`).
 
 ### Public demo (`DEMO_MODE`)
 
@@ -144,7 +148,7 @@ business:** the reset deletes all data, and it refuses to run without `DEMO_MODE
 | `npm test` | Unit tests |
 | `npm run db:generate` | Create a migration after changing `src/db/schema/` |
 | `npm run db:migrate` | Apply database migrations |
-| `npm run db:seed` | Add the sample business, logins and rentals (safe to run again) |
+| `npm run db:seed` | Add the sample business, logins and rentals (safe to run again; refuses a database that already has real accounts, unless `DEMO_MODE="true"`) |
 | `npm run db:reset-demo` | Demo only: delete everything and seed again |
 
 ## Customizing

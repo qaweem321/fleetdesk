@@ -45,8 +45,9 @@ Read the docs that ship with the package before using a Next.js API:
   `build-quote.ts` (`buildQuote`: loads prices from the database and calculates; **every price
   shown or charged comes from here**), `coupon.ts`, `rental-days.ts`, `input.ts`, `request.ts`.
 - `src/lib/bookings/`: `availability.ts` (which cars are free), `create.ts` (`createBooking`),
-  `cancel.ts`, `queries.ts`, `status.ts` (labels and cancellation rules), `search.ts` (search in
-  the URL), `rules.ts` (notice period, longest rental). **No double bookings** is enforced by an
+  `cancel.ts` (cancelling gives coupon uses back), `queries.ts`, `status.ts` (labels and
+  cancellation rules), `search.ts` (search in the URL), `rules.ts` (notice period, longest
+  rental). **No double bookings** is enforced by an
   exclusion constraint in `drizzle/0004_no_double_bookings.sql`; keep `HOLDING_STATUSES` in sync
   with it.
 - `src/lib/payments/`: Stripe (optional) and the payment records. `checkout.ts` (online
@@ -59,6 +60,9 @@ Read the docs that ship with the package before using a Next.js API:
   `agreement.ts` (`buildAgreementText`; the signed text is saved, never rebuilt), `input.ts`,
   `queries.ts`. Pickup and return live in `src/app/admin/bookings/[id]/pickup` and `/return`.
 - `src/lib/payments/deposits.ts`: deposit holds on the saved card (Stripe) and settling them.
+  Card holds expire after about 7 days, so they're only offered when the car is due back within
+  `CARD_HOLD_MAX_DAYS` (`cardHoldFits`). Stripe calls that may be repeated get an
+  `idempotencyKey`.
 - `src/lib/maintenance/`: service reminders (`taskUrgency`, `nextTaskDue`, pure).
 - `src/lib/reports/`: `period.ts` (days and months at the business, pure), `queries.ts`
   (dashboard and reports; real pickup/return times once they happened).

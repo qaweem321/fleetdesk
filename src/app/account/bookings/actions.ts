@@ -7,6 +7,7 @@ import type { ActionState } from "@/lib/action-state";
 import { cancelBooking } from "@/lib/bookings/cancel";
 import { getBooking } from "@/lib/bookings/queries";
 import { customerCanCancel } from "@/lib/bookings/status";
+import { isDemoMode } from "@/lib/demo";
 import { sendBookingCancelledEmails } from "@/lib/notifications/booking-emails";
 import { startCheckout } from "@/lib/payments/checkout";
 import { bookingLedger, refundOnlinePayments } from "@/lib/payments/records";
@@ -38,8 +39,16 @@ export async function cancelMyBooking(
     return { error: "This booking was already changed. Please reload the page." };
   }
   const { paid } = await bookingLedger(booking.id, booking.total);
+  let refundProblem = false;
   if (paid > 0) {
-    await refundOnlinePayments(booking.id, paid, "Refund: cancelled by the customer");
+    // The booking is cancelled either way; a refund that fails now is done by staff from the
+    // booking page (it shows what was paid), so don't show the customer an error page.
+    try {
+      await refundOnlinePayments(booking.id, paid, "Refund: cancelled by the customer");
+    } catch (error) {
+      console.error("Refund after cancellation failed:", error);
+      refundProblem = true;
+    }
   }
   after(() =>
     sendBookingCancelledEmails({ ...booking, status: "cancelled" }, settings, "customer").catch(
@@ -48,7 +57,11 @@ export async function cancelMyBooking(
   );
   revalidatePath(`/account/bookings/${booking.id}`);
   revalidatePath("/account");
-  return { success: "Your booking is cancelled. We've sent you a confirmation email." };
+  const email = isDemoMode() ? "" : " We've sent you a confirmation email.";
+  const refund = refundProblem
+    ? " Your refund couldn't be started automatically; we'll send it to you shortly."
+    : "";
+  return { success: `Your booking is cancelled.${refund}${email}` };
 }
 
 // Back to the payment page for a booking that's still waiting for its online payment.

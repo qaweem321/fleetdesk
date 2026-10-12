@@ -16,7 +16,7 @@ import {
   payments,
   vehicles,
 } from "@/db/schema";
-import { type ActionState, isExclusionViolation } from "@/lib/action-state";
+import { type ActionState, isExclusionViolation, isUniqueViolation } from "@/lib/action-state";
 import { getBooking } from "@/lib/bookings/queries";
 import { clientIp } from "@/lib/client-ip";
 import { approveAtCounter, getDriverProfile } from "@/lib/drivers/profile";
@@ -25,7 +25,12 @@ import { formReader } from "@/lib/form-input";
 import { sendRentalStartedEmail } from "@/lib/notifications/booking-emails";
 import { buildAgreementText } from "@/lib/operations/agreement";
 import { parseInspectionInput, parseSignature } from "@/lib/operations/input";
-import { holdDepositOnSavedCard } from "@/lib/payments/deposits";
+import {
+  CARD_HOLD_MAX_DAYS,
+  cardHoldFits,
+  holdDepositOnSavedCard,
+  releaseDepositHold,
+} from "@/lib/payments/deposits";
 import { requireStaff } from "@/lib/session";
 import { requireSettings } from "@/lib/settings";
 import { saveImage } from "@/lib/storage";
@@ -128,7 +133,13 @@ export async function completePickup(
     }
   }
 
-  if (booking.depositAmount > 0 && depositMethod === "card") {
+  if (depositMethod === "card" && !cardHoldFits(booking.returnAt)) {
+    return {
+      error: `Card holds expire after about a week, so for a rental longer than ${CARD_HOLD_MAX_DAYS} days please take the deposit at the counter.`,
+    };
+  }
+  const holdsOnCard = booking.depositAmount > 0 && depositMethod === "card";
+  if (holdsOnCard) {
     const problem = await holdDepositOnSavedCard({
       bookingId: booking.id,
       amount: booking.depositAmount,
@@ -178,47 +189,59 @@ export async function completePickup(
   const now = new Date();
   const counterDeposit = COUNTER_DEPOSIT_METHODS.find((method) => method === depositMethod);
 
-  await atomic((tx) => [
-    tx.insert(inspections).values({
-      id: inspectionId,
-      bookingId: booking.id,
-      kind: "pickup",
-      ...inspection.values,
-      createdById: staff.id,
-    }),
-    ...photoIds.map((fileId, position) =>
-      tx.insert(inspectionPhotos).values({ inspectionId, fileId, position }),
-    ),
-    tx.insert(agreements).values({
-      bookingId: booking.id,
-      text: agreementText,
-      signerName,
-      signatureFileId: savedSignature.id,
-      // Kept as evidence: where the agreement was signed from.
-      signedFromIp,
-      staffId: staff.id,
-    }),
-    tx
-      .update(bookings)
-      .set({ status: "active", pickedUpAt: now, updatedAt: now })
-      .where(eq(bookings.id, booking.id)),
-    tx
-      .update(vehicles)
-      .set({ mileage: inspection.values.mileage })
-      .where(eq(vehicles.id, vehicle.id)),
-    ...(booking.depositAmount > 0 && counterDeposit
-      ? [
-          tx.insert(payments).values({
-            bookingId: booking.id,
-            kind: "deposit_hold",
-            method: counterDeposit,
-            amount: booking.depositAmount,
-            description: "Deposit taken at the counter",
-            createdById: staff.id,
-          }),
-        ]
-      : []),
-  ]);
+  try {
+    await atomic((tx) => [
+      tx.insert(inspections).values({
+        id: inspectionId,
+        bookingId: booking.id,
+        kind: "pickup",
+        ...inspection.values,
+        createdById: staff.id,
+      }),
+      ...photoIds.map((fileId, position) =>
+        tx.insert(inspectionPhotos).values({ inspectionId, fileId, position }),
+      ),
+      tx.insert(agreements).values({
+        bookingId: booking.id,
+        text: agreementText,
+        signerName,
+        signatureFileId: savedSignature.id,
+        // Kept as evidence: where the agreement was signed from.
+        signedFromIp,
+        staffId: staff.id,
+      }),
+      tx
+        .update(bookings)
+        .set({ status: "active", pickedUpAt: now, updatedAt: now })
+        .where(eq(bookings.id, booking.id)),
+      tx
+        .update(vehicles)
+        .set({ mileage: inspection.values.mileage })
+        .where(eq(vehicles.id, vehicle.id)),
+      ...(booking.depositAmount > 0 && counterDeposit
+        ? [
+            tx.insert(payments).values({
+              bookingId: booking.id,
+              kind: "deposit_hold",
+              method: counterDeposit,
+              amount: booking.depositAmount,
+              description: "Deposit taken at the counter",
+              createdById: staff.id,
+            }),
+          ]
+        : []),
+    ]);
+  } catch (error) {
+    // Someone else finished this pickup a moment earlier (the hold is theirs: keep it).
+    if (isUniqueViolation(error)) {
+      return { error: "This pickup was already completed. Please reload the page." };
+    }
+    // Don't leave the deposit on the customer's card for a pickup that didn't happen.
+    if (holdsOnCard) {
+      await releaseDepositHold(booking.id, staff.id).catch(console.error);
+    }
+    throw error;
+  }
   if (problems.length > 0 && licenseChecked && booking.customerId) {
     await approveAtCounter(booking.customerId, staff.id);
   }

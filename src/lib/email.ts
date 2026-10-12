@@ -74,11 +74,22 @@ export async function sendEmails(emails: Email[]) {
     emails.forEach(printEmail);
     return;
   }
+  // A failed batch doesn't stop the others: everyone it can reach still gets their email.
+  // The failures are reported together at the end.
+  const failures: unknown[] = [];
   for (let start = 0; start < emails.length; start += BATCH_SIZE) {
     if (start > 0) {
       await new Promise((resolve) => setTimeout(resolve, PAUSE_BETWEEN_BATCHES_MS));
     }
-    await postToResend("/emails/batch", emails.slice(start, start + BATCH_SIZE).map(toResend));
+    try {
+      await postToResend("/emails/batch", emails.slice(start, start + BATCH_SIZE).map(toResend));
+    } catch (error) {
+      failures.push(error);
+    }
+  }
+  if (failures.length > 0) {
+    const batches = Math.ceil(emails.length / BATCH_SIZE);
+    throw new AggregateError(failures, `${failures.length} of ${batches} email batches failed.`);
   }
 }
 

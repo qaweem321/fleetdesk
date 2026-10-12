@@ -18,6 +18,7 @@ import { driverReadinessProblems } from "@/lib/drivers/rules";
 import { formatMoney } from "@/lib/money";
 import { buildAgreementText } from "@/lib/operations/agreement";
 import { fuelLabel } from "@/lib/operations/charges";
+import { CARD_HOLD_MAX_DAYS, cardHoldFits } from "@/lib/payments/deposits";
 import { manualMethodLabels } from "@/lib/payments/input";
 import { bookingLedger } from "@/lib/payments/records";
 import { requireStaff } from "@/lib/session";
@@ -61,6 +62,8 @@ export default async function PickupPage({ params }: { params: Promise<{ id: str
     minAge: settings.minDriverAge,
   });
   const money = (amount: number) => formatMoney(amount, booking.currency);
+  // A hold on the card used online, when there is one and the car is back before it expires.
+  const cardHold = Boolean(booking.stripePaymentMethodId) && cardHoldFits(booking.returnAt);
   const preview = buildAgreementText({
     businessName: settings.businessName,
     businessAddress: settings.address,
@@ -204,16 +207,22 @@ export default async function PickupPage({ params }: { params: Promise<{ id: str
             )}
           </p>
           {booking.depositAmount > 0 && (
-            <Field label={`Deposit of ${money(booking.depositAmount)}`} htmlFor="depositMethod">
+            <Field
+              label={`Deposit of ${money(booking.depositAmount)}`}
+              htmlFor="depositMethod"
+              hint={
+                booking.stripePaymentMethodId && !cardHold
+                  ? `Card holds expire after about a week, so for this rental (longer than ${CARD_HOLD_MAX_DAYS} days) take the deposit at the counter.`
+                  : undefined
+              }
+            >
               <Select
                 id="depositMethod"
                 name="depositMethod"
-                defaultValue={booking.stripePaymentMethodId ? "card" : "card_terminal"}
+                defaultValue={cardHold ? "card" : "card_terminal"}
                 className="w-full sm:w-96"
               >
-                {booking.stripePaymentMethodId && (
-                  <option value="card">Hold on the card used online</option>
-                )}
+                {cardHold && <option value="card">Hold on the card used online</option>}
                 {Object.entries(manualMethodLabels).map(([value, label]) => (
                   <option key={value} value={value}>
                     Taken at the counter: {label}

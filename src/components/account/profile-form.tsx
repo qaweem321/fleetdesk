@@ -5,6 +5,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { authClient } from "@/lib/auth-client";
+import { NAME_MAX_LENGTH } from "@/lib/user-name";
 
 export function ProfileForm({ name }: { name: string }) {
   const router = useRouter();
@@ -42,7 +43,7 @@ export function ProfileForm({ name }: { name: string }) {
         id="account-name"
         name="name"
         required
-        maxLength={60}
+        maxLength={NAME_MAX_LENGTH}
         defaultValue={name}
         autoComplete="name"
       />

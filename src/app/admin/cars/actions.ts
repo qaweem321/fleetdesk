@@ -1,11 +1,11 @@
 "use server";
 
-import { and, eq, inArray } from "drizzle-orm";
+import { and, eq, inArray, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { db } from "@/db";
 import { atomic } from "@/db/atomic";
-import { carModelPhotos, carModels, files } from "@/db/schema";
+import { businessSettings, carModelPhotos, carModels, files } from "@/db/schema";
 import { type ActionState, isForeignKeyViolation } from "@/lib/action-state";
 import { parseCarModelInput } from "@/lib/fleet/input";
 import { formReader } from "@/lib/form-input";
@@ -25,8 +25,9 @@ function modelId(value: unknown) {
   return id;
 }
 
-// The photo ids in the order the form sent them, keeping only real public uploads.
-async function readPhotoIds(formData: FormData) {
+// The photo ids in the order the form sent them, keeping only real public uploads that nothing
+// else uses (another model's photo, the logo): removing a photo here deletes its file.
+async function readPhotoIds(formData: FormData, modelId: string | null) {
   const ids = [...new Set(formData.getAll("photos").map(String))]
     .filter(isUuid)
     .slice(0, MAX_PHOTOS);
@@ -36,7 +37,15 @@ async function readPhotoIds(formData: FormData) {
   const found = await db
     .select({ id: files.id })
     .from(files)
-    .where(and(inArray(files.id, ids), eq(files.visibility, "public")));
+    .where(
+      and(
+        inArray(files.id, ids),
+        eq(files.visibility, "public"),
+        sql`not exists (select 1 from ${carModelPhotos} where ${carModelPhotos.fileId} = ${files.id}
+          and ${carModelPhotos.carModelId} is distinct from ${modelId})`,
+        sql`not exists (select 1 from ${businessSettings} where ${businessSettings.logoFileId} = ${files.id})`,
+      ),
+    );
   const valid = new Set(found.map((file) => file.id));
   return ids.filter((id) => valid.has(id));
 }
@@ -72,7 +81,7 @@ export async function createCarModel(
     .insert(carModels)
     .values(parsed.values)
     .returning({ id: carModels.id });
-  await savePhotos(created.id, await readPhotoIds(formData));
+  await savePhotos(created.id, await readPhotoIds(formData, null));
   revalidatePath(LIST);
   redirect(`${LIST}/${created.id}`);
 }
@@ -88,7 +97,7 @@ export async function updateCarModel(
     return parsed;
   }
   const [photoIds] = await Promise.all([
-    readPhotoIds(formData),
+    readPhotoIds(formData, modelId(id)),
     db
       .update(carModels)
       .set(parsed.values)

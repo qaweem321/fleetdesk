@@ -49,3 +49,10 @@ test("accepts only real currency codes", () => {
   assert.equal(isValidCurrency("usd"), false);
   assert.equal(isValidCurrency("XYZ"), false);
 });
+
+test("amounts too large for the database are refused", () => {
+  assert.equal(parseMoney("20000000.00", "USD"), 2_000_000_000);
+  assert.equal(parseMoney("20000000.01", "USD"), null);
+  assert.equal(parseMoney("999999999.99", "USD"), null);
+  assert.equal(parseMoney("999999999999", "JPY"), null);
+});

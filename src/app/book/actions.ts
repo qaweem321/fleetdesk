@@ -60,10 +60,13 @@ export async function bookCar(_previous: BookState, formData: FormData): Promise
   if (formData.get("acceptTerms") !== "on") {
     return { error: "Please accept the rental terms." };
   }
-  // The driver's age on the pickup date, from the form or from their saved driver details.
-  const typedBirthDate = parseDateKey(String(formData.get("dateOfBirth") ?? ""));
+  // The driver's age on the pickup date. A saved date of birth always wins (staff may have
+  // checked it already); the form's field is only for people who haven't given one yet.
   const profile = await getDriverProfile(user.id);
-  const dateOfBirth = typedBirthDate ?? profile?.dateOfBirth ?? null;
+  const typedBirthDate = profile?.dateOfBirth
+    ? null
+    : parseDateKey(String(formData.get("dateOfBirth") ?? ""));
+  const dateOfBirth = profile?.dateOfBirth ?? typedBirthDate;
   const ageProblem = driverAgeProblem(
     dateOfBirth,
     localDateKey(parsed.request.start, settings.timeZone),
@@ -94,7 +97,7 @@ export async function bookCar(_previous: BookState, formData: FormData): Promise
   if ("error" in result) {
     return result;
   }
-  if (typedBirthDate && typedBirthDate !== profile?.dateOfBirth) {
+  if (typedBirthDate) {
     await saveDateOfBirth(user.id, typedBirthDate);
   }
   if (paymentMethod === "online") {

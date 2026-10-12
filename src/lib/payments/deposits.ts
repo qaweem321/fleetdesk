@@ -11,6 +11,17 @@ import { getStripe, stripeCurrency } from "./stripe";
 
 type Hold = { bookingId: string; amount: number; currency: string; staffId: string };
 
+const DAY = 86_400_000;
+
+// Stripe lets go of a card hold that isn't charged within about 7 days. So a hold is only
+// offered when the car is due back within 6 days of handing it over; for longer rentals the
+// deposit is taken at the counter.
+export const CARD_HOLD_MAX_DAYS = 6;
+
+export function cardHoldFits(returnAt: Date, now = new Date()) {
+  return returnAt.getTime() - now.getTime() <= CARD_HOLD_MAX_DAYS * DAY;
+}
+
 // Holds the deposit on the card the customer paid with online. Returns a message when the bank
 // wants the customer to confirm (or there's no saved card): then staff take it at the counter.
 export async function holdDepositOnSavedCard({
@@ -42,15 +53,23 @@ export async function holdDepositOnSavedCard({
       },
       { idempotencyKey: `deposit-${bookingId}` },
     );
-    await db.insert(payments).values({
-      bookingId,
-      kind: "deposit_hold",
-      method: "stripe",
-      amount,
-      description: "Deposit held on the card",
-      stripePaymentIntentId: intent.id,
-      createdById: staffId,
-    });
+    // A retried pickup gets the same hold back from Stripe (idempotency key): record it once.
+    const [recorded] = await db
+      .select({ id: payments.id })
+      .from(payments)
+      .where(and(eq(payments.bookingId, bookingId), eq(payments.stripePaymentIntentId, intent.id)))
+      .limit(1);
+    if (!recorded) {
+      await db.insert(payments).values({
+        bookingId,
+        kind: "deposit_hold",
+        method: "stripe",
+        amount,
+        description: "Deposit held on the card",
+        stripePaymentIntentId: intent.id,
+        createdById: staffId,
+      });
+    }
     return null;
   } catch (error) {
     if (error instanceof Stripe.errors.StripeCardError) {
@@ -79,7 +98,8 @@ async function openStripeHold(bookingId: string) {
 
 // At the return: charge `amount` (0 to the held amount) from a held card deposit and let go of
 // the rest. Returns what was charged, or null when there's no card hold (counter deposits are
-// settled by staff and recorded on the Payments card).
+// settled by staff and recorded on the Payments card). If the hold had already expired, nothing
+// can be charged from it: it's recorded as let go, and what's owed shows as still to pay.
 export async function settleCardDeposit(bookingId: string, amount: number, staffId: string) {
   const hold = await openStripeHold(bookingId);
   if (!hold?.stripePaymentIntentId) {
@@ -87,21 +107,58 @@ export async function settleCardDeposit(bookingId: string, amount: number, staff
   }
   const stripe = getStripe();
   const charge = Math.min(amount, hold.amount);
-  // Capturing part of a hold lets go of the rest automatically.
-  if (charge > 0) {
-    await stripe.paymentIntents.capture(hold.stripePaymentIntentId, { amount_to_capture: charge });
-  } else {
-    await stripe.paymentIntents.cancel(hold.stripePaymentIntentId);
+  try {
+    // Capturing part of a hold lets go of the rest automatically.
+    if (charge > 0) {
+      await stripe.paymentIntents.capture(hold.stripePaymentIntentId, {
+        amount_to_capture: charge,
+      });
+    } else {
+      await stripe.paymentIntents.cancel(hold.stripePaymentIntentId);
+    }
+  } catch (error) {
+    if (!(error instanceof Stripe.errors.StripeInvalidRequestError)) {
+      throw error;
+    }
+    await recordRows(bookingId, staffId, hold.amount, 0, "The hold on the card had expired");
+    return { charged: 0, holdExpired: true };
   }
+  await recordRows(bookingId, staffId, hold.amount, charge, "Released on the card");
+  return { charged: charge, holdExpired: false };
+}
+
+async function recordRows(
+  bookingId: string,
+  staffId: string,
+  held: number,
+  kept: number,
+  givenBack: string,
+) {
   await db.insert(payments).values(
-    depositSettlementRows(hold.amount, charge, "Released on the card").map((row) => ({
+    depositSettlementRows(held, kept, givenBack).map((row) => ({
       ...row,
       bookingId,
       method: "stripe" as const,
       createdById: staffId,
     })),
   );
-  return charge;
+}
+
+// A pickup that failed after the deposit was held: let go of the hold, so it doesn't sit on the
+// customer's card for days. The next try holds it again.
+export async function releaseDepositHold(bookingId: string, staffId: string) {
+  const hold = await openStripeHold(bookingId);
+  if (!hold?.stripePaymentIntentId) {
+    return;
+  }
+  await getStripe().paymentIntents.cancel(hold.stripePaymentIntentId);
+  await recordRows(
+    bookingId,
+    staffId,
+    hold.amount,
+    0,
+    "Released on the card (pickup not finished)",
+  );
 }
 
 // Is the deposit held on the customer's card (rather than taken at the counter)?

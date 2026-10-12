@@ -39,6 +39,24 @@ First public version.
 - Tax rate and name, grace period for late returns, booking notice and longest rental.
 - Price calculator on the Pricing page to check any quote.
 
+### Safety and money
+- Card deposit holds are only offered when the car is due back within 6 days (Stripe lets go of
+  holds after about a week); an expired hold is recorded and what's owed shows as still to pay.
+- A pickup that fails after the deposit was held lets go of the hold; a retried pickup records
+  the deposit once; two people finishing the same pickup or return get a message.
+- The amount kept from a deposit can't be more than the customer owes.
+- Coupon limits hold even when two people book at the same moment, and cancelled or unpaid
+  bookings give their coupon use back.
+- A saved date of birth can't be changed from the booking form (it may already be checked).
+- "Pay now" closes the previous payment page; a second payment is refunded automatically.
+- Refunds are safe to repeat, and a failed refund no longer stops a cancellation.
+- The currency is fixed once cars, extras, coupons or bookings exist.
+- Very large amounts get a clear message; car models can't share photo files with other models
+  or the logo; names are checked on the server.
+- The "Log in" / "Sign up" links keep where you were going (for example an invitation).
+- `docker-compose.yml` only exposes the app to the same machine (the proxy); one failed email
+  batch no longer stops the rest; `npm run db:seed` refuses a database with real accounts.
+
 ### Shipping
 - Docker setup with Postgres, migrations, a photo volume and the daily job; Caddy example;
   `vercel.json` for Vercel.

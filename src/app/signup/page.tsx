@@ -2,11 +2,13 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { AuthSwitchLink } from "@/components/auth-switch-link";
 import { PasswordInput } from "@/components/password-input";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { authClient } from "@/lib/auth-client";
 import { getNextPath } from "@/lib/safe-redirect";
+import { NAME_MAX_LENGTH } from "@/lib/user-name";
 
 export default function SignUpPage() {
   const [error, setError] = useState("");
@@ -50,10 +52,7 @@ export default function SignUpPage() {
             Click it to finish creating your account. Don&apos;t forget to check your spam folder.
           </p>
           <p className="text-sm text-muted-foreground">
-            Already verified?{" "}
-            <Link href="/login" className="text-link hover:underline">
-              Log in
-            </Link>
+            Already verified? <AuthSwitchLink href="/login">Log in</AuthSwitchLink>
           </p>
         </div>
       </main>
@@ -65,7 +64,13 @@ export default function SignUpPage() {
       <form method="post" onSubmit={handleSubmit} className="w-full max-w-sm space-y-4">
         <h1 className="text-2xl font-bold">Create your account</h1>
 
-        <Input name="name" required placeholder="Full name" autoComplete="name" />
+        <Input
+          name="name"
+          required
+          maxLength={NAME_MAX_LENGTH}
+          placeholder="Full name"
+          autoComplete="name"
+        />
         <Input name="email" type="email" required placeholder="Email" autoComplete="email" />
         <PasswordInput
           name="password"
@@ -93,10 +98,7 @@ export default function SignUpPage() {
         </Button>
 
         <p className="text-sm text-muted-foreground">
-          Already have an account?{" "}
-          <Link href="/login" className="text-link hover:underline">
-            Log in
-          </Link>
+          Already have an account? <AuthSwitchLink href="/login">Log in</AuthSwitchLink>
         </p>
       </form>
     </main>

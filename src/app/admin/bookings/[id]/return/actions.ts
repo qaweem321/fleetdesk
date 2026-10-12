@@ -16,10 +16,10 @@ import {
   payments,
   vehicles,
 } from "@/db/schema";
-import type { ActionState } from "@/lib/action-state";
+import { type ActionState, isUniqueViolation } from "@/lib/action-state";
 import { getBooking } from "@/lib/bookings/queries";
 import { formReader } from "@/lib/form-input";
-import { parseMoney } from "@/lib/money";
+import { formatMoney, parseMoney } from "@/lib/money";
 import { sendRentalCompletedEmail } from "@/lib/notifications/booking-emails";
 import { parseChargeLines, parseInspectionInput } from "@/lib/operations/input";
 import { getInspections } from "@/lib/operations/queries";
@@ -91,6 +91,13 @@ export async function completeReturn(
   if (keep === null || (deposit && keep > ledger.depositHeld)) {
     return { error: "The amount kept from the deposit can't be more than the deposit." };
   }
+  // ...nor more than the customer owes: what's still due for the booking plus the new charges.
+  const owed = ledger.due + charges.values.reduce((sum, line) => sum + line.amount, 0);
+  if (keep > owed) {
+    return {
+      error: `The customer owes ${formatMoney(owed, booking.currency)}, so you can't keep more than that from the deposit.`,
+    };
+  }
 
   const ids = [...new Set(formData.getAll("photos").map(String))].filter(isUuid).slice(0, 30);
   const ownPhotos =
@@ -110,37 +117,46 @@ export async function completeReturn(
 
   const inspectionId = randomUUID();
   const now = new Date();
-  await atomic((tx) => [
-    tx.insert(inspections).values({
-      id: inspectionId,
-      bookingId: booking.id,
-      kind: "return",
-      ...inspection.values,
-      createdById: staff.id,
-    }),
-    ...photoIds.map((fileId, position) =>
-      tx.insert(inspectionPhotos).values({ inspectionId, fileId, position }),
-    ),
-    ...charges.values.map((line) =>
-      tx.insert(bookingCharges).values({ bookingId: booking.id, ...line, createdById: staff.id }),
-    ),
-    tx
-      .update(bookings)
-      .set({ status: "completed", returnedAt: now, returnLocationId: place.id, updatedAt: now })
-      .where(eq(bookings.id, booking.id)),
-    tx
-      .update(vehicles)
-      .set({
-        mileage: inspection.values.mileage,
-        locationId: place.id,
-        status: read("needsMaintenance") === "on" ? "maintenance" : "available",
-      })
-      .where(eq(vehicles.id, booking.vehicleId)),
-  ]);
+  try {
+    await atomic((tx) => [
+      tx.insert(inspections).values({
+        id: inspectionId,
+        bookingId: booking.id,
+        kind: "return",
+        ...inspection.values,
+        createdById: staff.id,
+      }),
+      ...photoIds.map((fileId, position) =>
+        tx.insert(inspectionPhotos).values({ inspectionId, fileId, position }),
+      ),
+      ...charges.values.map((line) =>
+        tx.insert(bookingCharges).values({ bookingId: booking.id, ...line, createdById: staff.id }),
+      ),
+      tx
+        .update(bookings)
+        .set({ status: "completed", returnedAt: now, returnLocationId: place.id, updatedAt: now })
+        .where(eq(bookings.id, booking.id)),
+      tx
+        .update(vehicles)
+        .set({
+          mileage: inspection.values.mileage,
+          locationId: place.id,
+          status: read("needsMaintenance") === "on" ? "maintenance" : "available",
+        })
+        .where(eq(vehicles.id, booking.vehicleId)),
+    ]);
+  } catch (error) {
+    // Someone else finished this return a moment earlier.
+    if (isUniqueViolation(error)) {
+      return { error: "This return was already completed. Please reload the page." };
+    }
+    throw error;
+  }
 
+  let holdExpired = false;
   if (deposit && ledger.depositHeld > 0) {
     if (deposit.method === "stripe") {
-      await settleCardDeposit(booking.id, keep, staff.id);
+      holdExpired = (await settleCardDeposit(booking.id, keep, staff.id))?.holdExpired ?? false;
     } else {
       await db.insert(payments).values(
         depositSettlementRows(ledger.depositHeld, keep, "Deposit given back").map((row) => ({
@@ -159,5 +175,6 @@ export async function completeReturn(
       await sendRentalCompletedEmail(completed, settings).catch(console.error);
     }
   });
-  redirect(`/admin/bookings/${booking.id}?returned=1`);
+  // An expired card hold couldn't be charged: the booking page says to collect it.
+  redirect(`/admin/bookings/${booking.id}?returned=1${holdExpired ? "&hold=expired" : ""}`);
 }

@@ -7,6 +7,16 @@ import * as schema from "@/db/schema";
 import { accountDeletionBlockers } from "@/lib/account";
 import { DEMO_DISABLED_MESSAGE, isDemoLogin, isDemoMode } from "@/lib/demo";
 import { buttonEmailHtml, sendEmail } from "@/lib/email";
+import { cleanUserName } from "@/lib/user-name";
+
+// Names are checked here, on the server, for signup and for changes on the Account page.
+function checkedName(value: unknown) {
+  const checked = cleanUserName(value);
+  if ("error" in checked) {
+    throw new APIError("BAD_REQUEST", { message: checked.error });
+  }
+  return checked.name;
+}
 
 // Account changes that would lock other demo visitors out of the shared sample logins.
 const PROTECTED_DEMO_PATHS = ["/change-password", "/delete-user", "/change-email", "/update-user"];
@@ -92,6 +102,17 @@ export const auth = betterAuth({
   },
   // Limits login attempts and email sending per IP (on in production only).
   // Stored in the database because serverless instances don't share memory.
+  databaseHooks: {
+    user: {
+      create: {
+        before: async (user) => ({ data: { ...user, name: checkedName(user.name) } }),
+      },
+      update: {
+        before: async (user) =>
+          "name" in user ? { data: { ...user, name: checkedName(user.name) } } : undefined,
+      },
+    },
+  },
   rateLimit: { storage: "database" },
   plugins: [nextCookies()],
 });

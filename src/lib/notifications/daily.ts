@@ -2,7 +2,7 @@ import { and, eq, gt, isNull, lt, lte, type SQL, sql } from "drizzle-orm";
 import { absoluteUrl } from "@/config/site";
 import { db } from "@/db";
 import { bookings, businessSettings, files } from "@/db/schema";
-import { releaseExpiredHolds } from "@/lib/bookings/availability";
+import { releaseExpiredHolds } from "@/lib/bookings/cancel";
 import { getBooking } from "@/lib/bookings/queries";
 import { buttonEmailHtml, type Email, sendEmails } from "@/lib/email";
 import { formatDateTime } from "@/lib/format";

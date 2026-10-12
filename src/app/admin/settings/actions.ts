@@ -6,6 +6,7 @@ import { db } from "@/db";
 import { businessSettings, files } from "@/db/schema";
 import type { ActionState } from "@/lib/action-state";
 import { parseBusinessInput } from "@/lib/business-input";
+import { currencyInUse } from "@/lib/currency-lock";
 import { formReader } from "@/lib/form-input";
 import { parseMoney } from "@/lib/money";
 import { DEFAULT_AGREEMENT_TERMS } from "@/lib/operations/agreement";
@@ -41,6 +42,12 @@ export async function updateSettings(
   const parsed = parseBusinessInput(read);
   if ("error" in parsed) {
     return parsed;
+  }
+  if (parsed.values.currency !== current.currency && (await currencyInUse())) {
+    return {
+      error:
+        "The currency can't be changed once there are cars, extras, coupons or bookings: every price is stored in it.",
+    };
   }
   const logo = await checkLogo(read("logo"));
   if ("error" in logo) {

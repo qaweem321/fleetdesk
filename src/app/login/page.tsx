@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { AuthSwitchLink } from "@/components/auth-switch-link";
 import { PasswordInput } from "@/components/password-input";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -60,10 +61,7 @@ export default function LoginPage() {
         </Button>
 
         <p className="text-sm text-muted-foreground">
-          No account yet?{" "}
-          <Link href="/signup" className="text-link hover:underline">
-            Sign up
-          </Link>
+          No account yet? <AuthSwitchLink href="/signup">Sign up</AuthSwitchLink>
         </p>
       </form>
     </main>

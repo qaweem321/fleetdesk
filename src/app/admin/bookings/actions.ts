@@ -35,10 +35,17 @@ export async function staffCancelBooking(
   if (!(await cancelBooking(booking.id, reason))) {
     return { error: "Only bookings that haven't been picked up can be cancelled." };
   }
+  let refundProblem = "";
   if (read("refund") === "on") {
     const { paid } = await bookingLedger(booking.id, booking.total);
     if (paid > 0) {
-      await refundOnlinePayments(booking.id, paid, `Refund: ${reason}`);
+      // The booking is cancelled either way: say so, and that the refund needs another try.
+      try {
+        await refundOnlinePayments(booking.id, paid, `Refund: ${reason}`);
+      } catch (error) {
+        console.error("Refund after cancellation failed:", error);
+        refundProblem = " The refund didn't go through: try again under Payments.";
+      }
     }
   }
   if (read("notify") === "on") {
@@ -52,5 +59,5 @@ export async function staffCancelBooking(
   }
   revalidatePath(`/admin/bookings/${booking.id}`);
   revalidatePath("/admin/bookings");
-  return { success: "Booking cancelled. The car is free again." };
+  return { success: `Booking cancelled. The car is free again.${refundProblem}` };
 }

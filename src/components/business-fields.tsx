@@ -22,7 +22,14 @@ const currencies = Intl.supportedValuesOf("currency").map((code) => ({
 
 // Business name, currency, time zone and contact email: shared by the setup wizard and the
 // Settings page, so both check and show the same things.
-export function BusinessFields({ values = {} }: { values?: Values }) {
+// `currencyLocked`: prices already exist in the current currency (see currencyInUse).
+export function BusinessFields({
+  values = {},
+  currencyLocked = false,
+}: {
+  values?: Values;
+  currencyLocked?: boolean;
+}) {
   return (
     <>
       <Field label="Business name" htmlFor="businessName">
@@ -37,11 +44,22 @@ export function BusinessFields({ values = {} }: { values?: Values }) {
         />
       </Field>
       <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="Currency" htmlFor="currency" hint="Every price is shown in this currency.">
+        <Field
+          label="Currency"
+          htmlFor="currency"
+          hint={
+            currencyLocked
+              ? "Fixed once prices or bookings exist: every price is stored in it."
+              : "Every price is shown in this currency."
+          }
+        >
+          {/* A disabled field isn't sent with the form, so the value goes along hidden. */}
+          {currencyLocked && <input type="hidden" name="currency" value={values.currency} />}
           <Select
             id="currency"
-            name="currency"
+            name={currencyLocked ? undefined : "currency"}
             defaultValue={values.currency ?? "USD"}
+            disabled={currencyLocked}
             className="w-full"
           >
             {currencies.map((currency) => (

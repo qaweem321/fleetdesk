@@ -1,4 +1,4 @@
-import { and, eq, inArray } from "drizzle-orm";
+import { and, eq, inArray, isNull } from "drizzle-orm";
 import { db } from "@/db";
 import { driverProfiles, files } from "@/db/schema";
 import { deleteFiles, fileUrl } from "@/lib/storage";
@@ -79,7 +79,9 @@ export async function submitDriverDetails(
   await deleteFiles(replaced);
 }
 
-// A date of birth given while booking (the rest of the details can come later).
+// A date of birth given while booking (the rest of the details can come later). Only fills in
+// a missing one: a saved date may already be checked by staff, so it's changed on the Driver
+// details page, which sends everything for checking again.
 export async function saveDateOfBirth(userId: string, dateOfBirth: string) {
   await db
     .insert(driverProfiles)
@@ -87,6 +89,7 @@ export async function saveDateOfBirth(userId: string, dateOfBirth: string) {
     .onConflictDoUpdate({
       target: driverProfiles.userId,
       set: { dateOfBirth, updatedAt: new Date() },
+      where: isNull(driverProfiles.dateOfBirth),
     });
 }
 

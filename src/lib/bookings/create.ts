@@ -1,12 +1,14 @@
 import { randomBytes, randomUUID } from "node:crypto";
-import { eq, sql } from "drizzle-orm";
+import { and, eq, isNull, lt, or, sql } from "drizzle-orm";
+import { db } from "@/db";
 import { atomic } from "@/db/atomic";
 import { bookingExtras, bookings, coupons, users } from "@/db/schema";
 import { isExclusionViolation, isUniqueViolation } from "@/lib/action-state";
 import { HOLD_MINUTES, type PaymentMethod } from "@/lib/payments/options";
 import { type BuiltQuote, buildQuote, type QuoteRequest } from "@/lib/pricing/build-quote";
 import type { BusinessSettings } from "@/lib/settings";
-import { bookingWindow, freeVehicles, releaseExpiredHolds, type Window } from "./availability";
+import { bookingWindow, freeVehicles, type Window } from "./availability";
+import { releaseExpiredHolds } from "./cancel";
 import { makeReference } from "./status";
 
 type Customer = { id: string; name: string; email: string; phone: string };
@@ -93,7 +95,7 @@ export async function createBooking(input: CreateBooking): Promise<CreateResult>
     const bookingId = randomUUID();
     const reference = makeReference(randomBytes(6));
     try {
-      await atomic((tx) => [
+      const results = await atomic((tx) => [
         tx.insert(bookings).values({
           id: bookingId,
           reference,
@@ -112,15 +114,31 @@ export async function createBooking(input: CreateBooking): Promise<CreateResult>
         ),
         // Remember the phone number for the next booking.
         tx.update(users).set({ phone: customer.phone }).where(eq(users.id, customer.id)),
+        // Claimed in the same transaction, and only while uses are left: two bookings at the
+        // same moment can't both take the last use.
         ...(built.coupon
           ? [
               tx
                 .update(coupons)
                 .set({ timesUsed: sql`${coupons.timesUsed} + 1` })
-                .where(eq(coupons.id, built.coupon.id)),
+                .where(
+                  and(
+                    eq(coupons.id, built.coupon.id),
+                    or(isNull(coupons.maxUses), lt(coupons.timesUsed, coupons.maxUses)),
+                  ),
+                )
+                .returning({ id: coupons.id }),
             ]
           : []),
       ]);
+      if (built.coupon && (results.at(-1) as unknown[]).length === 0) {
+        // Someone used the last one a moment ago: undo this booking (its extras go with it).
+        await db.delete(bookings).where(eq(bookings.id, bookingId));
+        return {
+          error: "Please fix or remove the coupon code.",
+          couponError: "This code has been used up.",
+        };
+      }
       return { bookingId, reference };
     } catch (error) {
       // Taken by someone else a moment ago (or, very rarely, a reference already in use):

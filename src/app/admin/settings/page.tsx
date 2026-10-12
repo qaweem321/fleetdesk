@@ -6,6 +6,7 @@ import { Field } from "@/components/ui/field";
 import { Input, Select, Textarea } from "@/components/ui/input";
 import { MoneyInput } from "@/components/ui/money-input";
 import { SubmitButton } from "@/components/ui/submit-button";
+import { currencyInUse } from "@/lib/currency-lock";
 import { DEFAULT_AGREEMENT_TERMS } from "@/lib/operations/agreement";
 import { stripeConfigured } from "@/lib/payments/options";
 import { requireStaff } from "@/lib/session";
@@ -17,7 +18,11 @@ import { updatePaymentOptions, updateRentalTerms, updateSettings } from "./actio
 export const metadata: Metadata = { title: "Settings" };
 
 export default async function SettingsPage() {
-  const [, settings] = await Promise.all([requireStaff("settings:update"), requireSettings()]);
+  const [, settings, currencyLocked] = await Promise.all([
+    requireStaff("settings:update"),
+    requireSettings(),
+    currencyInUse(),
+  ]);
 
   return (
     <div className="max-w-2xl">
@@ -28,7 +33,7 @@ export default async function SettingsPage() {
 
       <div className="mt-8">
         <ActionForm action={updateSettings} className="space-y-5">
-          <BusinessFields values={settings} />
+          <BusinessFields values={settings} currencyLocked={currencyLocked} />
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="Phone" htmlFor="contactPhone">
               <Input
