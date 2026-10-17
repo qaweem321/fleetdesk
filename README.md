@@ -160,5 +160,9 @@ English; every visible string is in the page components.
 
 ## Support
 
-See `LICENSE` for what you may do with the code. Read this README and `AGENTS.md` first; bug
-reports are welcome. Custom changes for your business aren't included in the purchase.
+Questions and bug reports are welcome as GitHub issues. Read this README and `AGENTS.md`
+first; for bugs, include the steps to reproduce and any error message.
+
+## License
+
+MIT; see [LICENSE](LICENSE).

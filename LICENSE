@@ -1,64 +1,21 @@
-Fleetdesk Commercial License
+MIT License
 
-Copyright (c) 2026 Qaweem Ahmad. All rights reserved.
+Copyright (c) 2026 Qaweem Ahmad
 
-Qaweem Ahmad (the "Licensor") grants this license to the one person or one company that bought
-a Fleetdesk license from the Licensor, directly or through a store the Licensor sells on (such
-as Lemon Squeezy or Gumroad) (the "Licensee"). "The Software" means the Fleetdesk source code,
-documentation and other files supplied with it, including any updates the Licensor provides.
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-A license bought by a person covers that person. A license bought by a company covers the
-company and its employees and contractors. The license cannot be transferred or resold.
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
 
-1. What you may do
-
-   a. Run the Software, modified or not, for your own rental business or for your clients'
-      rental businesses, under your or their brand.
-   b. Modify the Software in any way and rebrand it (name, logo, colors, domains).
-   c. Run it on any number of servers, with any number of locations, vehicles and users.
-   d. Let employees and contractors work on the Software for these purposes.
-
-2. What you may not do
-
-   a. Sell, sublicense, share, give away or publish the Software's source code, or
-      any substantial part of it, on its own or as a template, starter kit, boilerplate, script
-      or code generator, whether modified or not. Your clients and their customers use the
-      running software; they don't receive its source code to resell.
-   b. Make the source code of the Software publicly available, for example in a public code
-      repository.
-   c. Use the Software to build a product that competes with the Software itself, such as
-      another car rental script or template for sale.
-   d. Remove this license or the copyright notice from the Software's files.
-
-3. Ownership
-
-   The Licensor keeps ownership of the Software. The Licensee owns the original work they add.
-
-4. No warranty
-
-   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
-   INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
-   PURPOSE AND NONINFRINGEMENT. The Licensee is responsible for reviewing, testing and securing
-   their installation, including its legal pages and how it handles their users' data, before
-   using it in production.
-
-5. Limitation of liability
-
-   IN NO EVENT SHALL THE LICENSOR BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
-   IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
-   SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE. The Licensor's total liability is
-   limited to the amount the Licensee paid for the Software.
-
-6. Termination
-
-   This license ends automatically if the Licensee breaks its terms. On termination the
-   Licensee must stop using and delete the Software.
-
-7. Third-party software
-
-   The Software uses open-source packages (listed in package.json) that keep their own licenses.
-
-8. Governing law
-
-   This license is governed by the laws of Pakistan. If any part of it can't be enforced, the
-   rest still applies.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.

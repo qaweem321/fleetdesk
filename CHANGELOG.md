@@ -11,6 +11,7 @@ Notable changes for buyers of Fleetdesk. The format follows
   database error (a date was passed in a form the normal Postgres driver rejects).
 
 ### Changed
+- The code is now open source under the MIT license (it was a paid, commercial license).
 - The Docker images use exact versions (Node 24.21.0, Postgres 17.11, Alpine 3.22.6) instead of
   moving tags, so every build gets the same, tested versions.
 
