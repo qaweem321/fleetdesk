@@ -5,7 +5,7 @@
 
 services:
   db:
-    image: postgres:17-alpine
+    image: postgres:17.11-alpine3.24
     restart: unless-stopped
     environment:
       POSTGRES_USER: fleetdesk
@@ -54,7 +54,7 @@ services:
   # Runs the daily job (reminder emails, staff summary, cleanup) every hour. Each reminder is
   # only ever sent once, so running it often is safe.
   cron:
-    image: alpine:3.22
+    image: alpine:3.22.6
     restart: unless-stopped
     env_file: .env
     command: >

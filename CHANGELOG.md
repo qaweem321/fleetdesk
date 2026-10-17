@@ -6,6 +6,14 @@ Notable changes for buyers of Fleetdesk. The format follows
 
 ## [Unreleased]
 
+### Fixed
+- On Docker and other non-Neon databases, the daily job and cancelling a booking failed with a
+  database error (a date was passed in a form the normal Postgres driver rejects).
+
+### Changed
+- The Docker images use exact versions (Node 24.21.0, Postgres 17.11, Alpine 3.22.6) instead of
+  moving tags, so every build gets the same, tested versions.
+
 ## [1.0.0] - 2026-10-10
 
 First public version.

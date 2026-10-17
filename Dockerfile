@@ -1,13 +1,13 @@
 # Fleetdesk production image. Used by docker-compose.yml; works on any host that runs Docker.
 
 # 1. Install dependencies (without running packages' install scripts).
-FROM node:24-alpine AS deps
+FROM node:24.21.0-alpine3.24 AS deps
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci --ignore-scripts
 
 # 2. Build the app.
-FROM node:24-alpine AS builder
+FROM node:24.21.0-alpine3.24 AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
@@ -23,7 +23,7 @@ FROM builder AS migrator
 CMD ["npx", "drizzle-kit", "migrate"]
 
 # 4. The small image that runs the app.
-FROM node:24-alpine AS runner
+FROM node:24.21.0-alpine3.24 AS runner
 WORKDIR /app
 ENV NODE_ENV=production \
     NEXT_TELEMETRY_DISABLED=1 \

@@ -5,10 +5,13 @@ import { bookings, coupons } from "@/db/schema";
 // Cancels the bookings matching `where` and gives their coupon uses back, in one statement: a
 // limited code isn't used up by bookings nobody paid for or that were cancelled.
 async function cancelBookings(where: SQL, reason: string, now: Date) {
+  // Raw SQL gets no column type to convert a Date, and postgres.js (Docker, any non-Neon
+  // database) rejects one: pass the time as an ISO string.
+  const at = now.toISOString();
   const result = await db.execute<{ id: string }>(sql`
     with cancelled as (
       update ${bookings}
-      set status = 'cancelled', cancelled_at = ${now}, cancel_reason = ${reason}, updated_at = ${now}
+      set status = 'cancelled', cancelled_at = ${at}, cancel_reason = ${reason}, updated_at = ${at}
       where ${where}
       returning ${bookings.id} as id, ${bookings.couponId} as coupon_id
     ), released as (
