@@ -1,7 +1,6 @@
 import { randomBytes } from "node:crypto";
 import { and, eq } from "drizzle-orm";
 import { makeReference } from "../../lib/bookings/status";
-import { demoLogins } from "../../lib/demo";
 import { buildAgreementText } from "../../lib/operations/agreement";
 import { depositSettlementRows } from "../../lib/payments/ledger";
 import { calculateQuote } from "../../lib/pricing/quote";
@@ -21,6 +20,7 @@ import {
   users,
   vehicles,
 } from "../schema";
+import { sampleLogins } from "./logins";
 
 const DAY = 86_400_000;
 
@@ -33,7 +33,7 @@ export async function seedBookings() {
   }
   const [[settings], [customer], [airport], [downtown]] = await Promise.all([
     db.select().from(businessSettings),
-    db.select().from(users).where(eq(users.email, demoLogins.customer.email)),
+    db.select().from(users).where(eq(users.email, sampleLogins.customer.email)),
     db.select().from(locations).where(eq(locations.name, "Miami Airport (MIA)")),
     db.select().from(locations).where(eq(locations.name, "Downtown Miami")),
   ]);

@@ -6,7 +6,6 @@ import { revalidatePath } from "next/cache";
 import { absoluteUrl } from "@/config/site";
 import { db } from "@/db";
 import { invitations, users } from "@/db/schema";
-import { DEMO_DISABLED_MESSAGE, isDemoLogin, isDemoMode } from "@/lib/demo";
 import { buttonEmailHtml, sendEmail } from "@/lib/email";
 import { isValidEmail } from "@/lib/email-address";
 import { INVITE_DAYS } from "@/lib/invitations";
@@ -29,9 +28,6 @@ async function findOtherStaff(userId: string, myId: string) {
     .where(and(eq(users.id, userId), ne(users.role, "customer")));
   if (!target) {
     throw new Error("Staff member not found.");
-  }
-  if (isDemoLogin(target.email)) {
-    throw new Error(DEMO_DISABLED_MESSAGE);
   }
   return target;
 }
@@ -59,8 +55,6 @@ export type InviteState = {
   error?: string;
   success?: string;
   email?: string;
-  // Demo mode sends no emails, so the inviter gets the link to share themselves.
-  link?: string;
 };
 
 export async function inviteStaff(
@@ -106,12 +100,6 @@ export async function inviteStaff(
   revalidatePath(STAFF_PATH);
 
   const link = absoluteUrl(`/invite/${token}`);
-  if (isDemoMode()) {
-    return {
-      success: `Invitation created for ${email}. Emails are off in this demo, so open this link in another browser to accept it:`,
-      link,
-    };
-  }
   const roleName = roleLabels[role].toLowerCase();
   try {
     await sendEmail({

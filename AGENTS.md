@@ -25,7 +25,7 @@ Read the docs that ship with the package before using a Next.js API:
 - `npm run format`: fix formatting and import order (Biome).
 - `npm test`: unit tests (`node:test` via tsx, files named `*.test.ts` next to the code).
 - After changing `src/db/schema/`: `npm run db:generate`, then `npm run db:migrate`.
-- `npm run db:seed`: sample business, logins and data (see `src/lib/demo.ts`).
+- `npm run db:seed`: sample business, logins and data (see `src/db/seed/logins.ts`).
 
 ## Where things live
 
@@ -74,8 +74,6 @@ Read the docs that ship with the package before using a Next.js API:
 - `src/lib/money.ts`: amounts are integers in the currency's smallest unit (`formatMoney`,
   `parseMoney`). `src/lib/format.ts` and `src/lib/time-zone.ts`: dates in the business's zone.
 - `src/lib/env.ts`: environment checks at startup (`src/instrumentation.ts`).
-- `src/lib/demo.ts`: `isDemoMode()` (`DEMO_MODE="true"`): no emails, no verification, banner.
-  Anything new that sends email needs a demo-mode path (see staff invitations).
 - `src/components/ui/`: `ActionForm`/`ActionMessage`, `Button`/`ButtonLink`,
   `Input`/`Select`/`Textarea`, `Field`, `SubmitButton`, `Badge`, `Skeleton`. Admin pieces in
   `src/components/admin/`: `PageHeader`, `Card`, `EmptyState`, `DeleteForm`. Shared:

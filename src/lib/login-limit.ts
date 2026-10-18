@@ -1,5 +1,4 @@
 import { APIError } from "better-auth/api";
-import { isDemoMode } from "@/lib/demo";
 import { rateLimit } from "@/lib/rate-limit";
 
 const WINDOW_SECONDS = 15 * 60;
@@ -11,10 +10,9 @@ export const loginRateRules = {
   "/sign-in/email": { window: WINDOW_SECONDS, max: MAX_ATTEMPTS },
 };
 
-// Password logins per account, so spreading guesses over many IP addresses doesn't help. Not in
-// demo mode, where every visitor shares the same sample logins.
+// Password logins per account, so spreading guesses over many IP addresses doesn't help.
 export async function checkLoginAttempts(path: string, body: unknown) {
-  if (path !== "/sign-in/email" || isDemoMode()) {
+  if (path !== "/sign-in/email") {
     return;
   }
   const email = String((body as { email?: unknown } | undefined)?.email ?? "")

@@ -22,7 +22,7 @@ export default function SignUpPage() {
 
     const form = new FormData(event.currentTarget);
     const email = String(form.get("email"));
-    const { data, error } = await authClient.signUp.email({
+    const { error } = await authClient.signUp.email({
       name: String(form.get("name")),
       email,
       password: String(form.get("password")),
@@ -32,11 +32,6 @@ export default function SignUpPage() {
     setLoading(false);
     if (error) {
       setError(error.message ?? "Something went wrong");
-      return;
-    }
-    // A session token means no verification is needed (demo mode): go straight in.
-    if (data?.token) {
-      window.location.replace(getNextPath());
       return;
     }
     setSentTo(email);

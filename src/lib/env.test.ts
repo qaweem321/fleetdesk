@@ -32,16 +32,6 @@ test("production also needs Resend", () => {
   ]);
 });
 
-test("demo mode doesn't need Resend and must be true or false", () => {
-  assert.deepEqual(
-    checkEnv({ ...valid, NODE_ENV: "production", DEMO_MODE: "true", CRON_SECRET: "x".repeat(16) }),
-    [],
-  );
-  assert.deepEqual(checkEnv({ ...valid, DEMO_MODE: "on" }), [
-    'DEMO_MODE must be "true" or "false", not "on".',
-  ]);
-});
-
 test("checks the storage driver and the S3 settings it needs", () => {
   assert.deepEqual(checkEnv({ ...valid, STORAGE_DRIVER: "local" }), []);
   assert.equal(checkEnv({ ...valid, STORAGE_DRIVER: "dropbox" }).length, 1);

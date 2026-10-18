@@ -1,17 +1,17 @@
 import { randomUUID } from "node:crypto";
 import { hashPassword } from "better-auth/crypto";
 import { inArray } from "drizzle-orm";
-import { DEMO_PASSWORD, demoLogins } from "../../lib/demo";
 import { db } from "../index";
 import { accounts, users } from "../schema";
+import { SAMPLE_PASSWORD, sampleLogins } from "./logins";
 
 const people = [
-  { ...demoLogins.owner, role: "owner" },
-  { ...demoLogins.agent, role: "agent" },
-  { ...demoLogins.customer, role: "customer" },
+  { ...sampleLogins.owner, role: "owner" },
+  { ...sampleLogins.agent, role: "agent" },
+  { ...sampleLogins.customer, role: "customer" },
 ] as const;
 
-// The sample logins, each with the demo password, so every part of the app can be tried.
+// The sample logins, each with the sample password, so every part of the app can be tried.
 export async function seedPeople() {
   await db
     .insert(users)
@@ -36,7 +36,7 @@ export async function seedPeople() {
       ),
     );
 
-  const passwordHash = await hashPassword(DEMO_PASSWORD);
+  const passwordHash = await hashPassword(SAMPLE_PASSWORD);
   await db
     .insert(accounts)
     .values(

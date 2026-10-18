@@ -7,7 +7,6 @@ import type { ActionState } from "@/lib/action-state";
 import { cancelBooking } from "@/lib/bookings/cancel";
 import { getBooking } from "@/lib/bookings/queries";
 import { customerCanCancel } from "@/lib/bookings/status";
-import { isDemoMode } from "@/lib/demo";
 import { sendBookingCancelledEmails } from "@/lib/notifications/booking-emails";
 import { startCheckout } from "@/lib/payments/checkout";
 import { bookingLedger, refundOnlinePayments } from "@/lib/payments/records";
@@ -57,11 +56,10 @@ export async function cancelMyBooking(
   );
   revalidatePath(`/account/bookings/${booking.id}`);
   revalidatePath("/account");
-  const email = isDemoMode() ? "" : " We've sent you a confirmation email.";
   const refund = refundProblem
     ? " Your refund couldn't be started automatically; we'll send it to you shortly."
     : "";
-  return { success: `Your booking is cancelled.${refund}${email}` };
+  return { success: `Your booking is cancelled.${refund} We've sent you a confirmation email.` };
 }
 
 // Back to the payment page for a booking that's still waiting for its online payment.

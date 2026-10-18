@@ -11,7 +11,6 @@ import { SubmitButton } from "@/components/ui/submit-button";
 import { getBooking } from "@/lib/bookings/queries";
 import { cancellationDeadline, customerCanCancel } from "@/lib/bookings/status";
 import { depositSentence, paymentSentence } from "@/lib/bookings/wording";
-import { isDemoMode } from "@/lib/demo";
 import { getDriverProfile } from "@/lib/drivers/profile";
 import { formatDateTime, formatTime } from "@/lib/format";
 import { formatMoney } from "@/lib/money";
@@ -101,10 +100,8 @@ export default async function MyBookingPage({ params, searchParams }: Props) {
         <div role="status" className="rounded-xl border border-success/40 bg-success/10 p-4">
           <p className="font-semibold">Your car is booked!</p>
           <p className="mt-1 text-sm text-muted-foreground">
-            {isDemoMode()
-              ? "Emails are turned off in this demo."
-              : `We've emailed the details to ${booking.customerEmail}.`}{" "}
-            Bring your driver&apos;s license and a payment card in your name to the pickup.
+            We&apos;ve emailed the details to {booking.customerEmail}. Bring your driver&apos;s
+            license and a payment card in your name to the pickup.
           </p>
         </div>
       )}

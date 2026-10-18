@@ -79,7 +79,6 @@ missing.
 | `STORAGE_DRIVER` | no | Where photos go: `database` (default), `local` or `s3` |
 | `STORAGE_LOCAL_DIR`, `S3_*` | no | Settings for the `local` and `s3` storage |
 | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` | no | Online payments (see below) |
-| `DEMO_MODE` | no | `true` for a public demo (see below) |
 
 ### Online payments with Stripe (optional)
 
@@ -131,14 +130,6 @@ first becomes the owner.
 3000 (reachable from the same machine only) and the daily job. Put a reverse proxy with HTTPS in
 front (`deploy/Caddyfile`).
 
-### Public demo (`DEMO_MODE`)
-
-Set `DEMO_MODE="true"` on a separate demo deployment with its own database, then run
-`npm run db:seed`. Emails are off (sign-up works without verification), a banner shows the
-sample logins, and those logins can't be changed or deleted. Run `npm run db:reset-demo` (for
-example every night) to put the demo back to its starting point. **Never turn it on for a real
-business:** the reset deletes all data, and it refuses to run without `DEMO_MODE="true"`.
-
 ## Scripts
 
 | Command | What it does |
@@ -148,8 +139,7 @@ business:** the reset deletes all data, and it refuses to run without `DEMO_MODE
 | `npm test` | Unit tests |
 | `npm run db:generate` | Create a migration after changing `src/db/schema/` |
 | `npm run db:migrate` | Apply database migrations |
-| `npm run db:seed` | Add the sample business, logins and rentals (safe to run again; refuses a database that already has real accounts, unless `DEMO_MODE="true"`) |
-| `npm run db:reset-demo` | Demo only: delete everything and seed again |
+| `npm run db:seed` | Add the sample business, logins and rentals (safe to run again; refuses a database that already has real accounts) |
 
 ## Customizing
 

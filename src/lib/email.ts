@@ -1,5 +1,4 @@
 import { siteConfig } from "@/config/site";
-import { isDemoMode } from "@/lib/demo";
 
 export type Email = {
   to: string;
@@ -17,14 +16,14 @@ const BATCH_SIZE = 100;
 const PAUSE_BETWEEN_BATCHES_MS = 600;
 
 function canSend() {
-  return Boolean(process.env.RESEND_API_KEY) && !isDemoMode();
+  return Boolean(process.env.RESEND_API_KEY);
 }
 
-// Without Resend (development) or in demo mode, emails are printed instead of sent.
+// Without Resend (development), emails are printed instead of sent.
 function printEmail({ to, subject, text }: Email) {
   console.log(
     `
---- Email (${process.env.RESEND_API_KEY ? "demo" : "dev"} mode, not sent) ---
+--- Email (dev mode, not sent) ---
 To: ${to}
 Subject: ${subject}
 

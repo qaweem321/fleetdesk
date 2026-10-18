@@ -32,14 +32,6 @@ export function InviteForm({ roles }: { roles: StaffRole[] }) {
         <SubmitButton pendingText="Sending...">Invite</SubmitButton>
       </div>
       <FormMessage error={state.error} success={state.success} />
-      {state.link && (
-        <Input
-          readOnly
-          value={state.link}
-          aria-label="Invitation link"
-          onFocus={(event) => event.currentTarget.select()}
-        />
-      )}
     </form>
   );
 }

@@ -3,7 +3,6 @@ import type { Metadata } from "next";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { db } from "@/db";
 import { invitations, users } from "@/db/schema";
-import { isDemoLogin } from "@/lib/demo";
 import { formatDate } from "@/lib/format";
 import { can, invitableRoles, roleLabels, staffRoles } from "@/lib/permissions";
 import { requireStaff } from "@/lib/session";
@@ -54,8 +53,6 @@ export default async function StaffPage() {
       <ul className="mt-8 divide-y divide-border rounded-xl border border-border">
         {staff.map((person) => {
           const isMe = person.id === me.id;
-          // The demo's sample logins stay as they are for every visitor.
-          const locked = isDemoLogin(person.email);
           return (
             <li key={person.id} className="flex flex-wrap items-center justify-between gap-3 p-4">
               <div>
@@ -66,7 +63,7 @@ export default async function StaffPage() {
                 <p className="text-sm text-subtle-foreground">{person.email}</p>
               </div>
 
-              {canManage && !isMe && !locked ? (
+              {canManage && !isMe ? (
                 <div className="flex items-center gap-3">
                   <form
                     key={`${person.id}-${person.role}`}
