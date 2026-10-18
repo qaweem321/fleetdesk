@@ -134,7 +134,6 @@ Read the docs that ship with the package before using a Next.js API:
 ## Keep the docs in sync (every change)
 
 In the **same commit** as a code change, update whatever it affects:
-- `CHANGELOG.md`: add a line under `## [Unreleased]` for anything a buyer would notice.
 - `README.md`: features list, setup steps, environment variables, scripts.
 - `AGENTS.md`: new conventions, folders or rules.
 - `.env.example`: new or changed variables.
