@@ -47,7 +47,7 @@ You need **Node.js 20.12 or newer** and a Postgres database (a free **Neon** acc
 https://neon.tech).
 
 ```bash
-npm install
+npm ci
 cp .env.example .env        # then fill in .env (see below)
 npm run db:migrate          # creates the tables
 npm run dev                 # http://localhost:3000
