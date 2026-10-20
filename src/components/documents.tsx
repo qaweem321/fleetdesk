@@ -44,10 +44,13 @@ function Paper({
 export async function AgreementDocument({ booking, settings, backHref }: DocumentProps) {
   const agreement = await getAgreement(booking.id);
   if (!agreement) {
+    // Still a full page (heading, way back), not a lone sentence.
     return (
-      <p className="text-muted-foreground">
-        This rental hasn&apos;t started yet, so there&apos;s no signed agreement.
-      </p>
+      <Paper title="Rental agreement" backHref={backHref}>
+        <p className="text-muted-foreground">
+          This rental hasn&apos;t started yet, so there&apos;s no signed agreement.
+        </p>
+      </Paper>
     );
   }
   return (

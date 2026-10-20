@@ -235,7 +235,8 @@ export default async function PickupPage({ params }: { params: Promise<{ id: str
         </Card>
 
         <Card title="4. Rental agreement">
-          <pre className="max-h-64 overflow-y-auto whitespace-pre-wrap rounded-lg bg-muted p-4 font-sans text-sm">
+          {/* Shown in full, not in a scroll box keyboard users can't reach. */}
+          <pre className="whitespace-pre-wrap rounded-lg bg-muted p-4 font-sans text-sm">
             {preview}
           </pre>
           <p className="mt-2 text-xs text-subtle-foreground">

@@ -11,7 +11,7 @@ export function AuthSwitchLink({ href, children }: { href: string; children: Rea
   const next = useSearchParams().get("next");
   const target = next ? `${href}?next=${encodeURIComponent(safeNextPath(next))}` : href;
   return (
-    <Link href={target} className="text-link hover:underline">
+    <Link href={target} className="text-link underline underline-offset-2">
       {children}
     </Link>
   );

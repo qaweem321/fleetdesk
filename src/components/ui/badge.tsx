@@ -1,12 +1,15 @@
 import type { ReactNode } from "react";
 import { cn } from "@/lib/cn";
 
+// The text mixes the tone with the page's text color (darker in light mode, lighter in dark mode),
+// so small badge text stays readable on its tinted background. "info" uses the fixed link color,
+// not the brand color, which the owner can set to anything.
 const tones = {
   neutral: "bg-muted text-secondary-foreground",
-  success: "bg-success/15 text-success",
-  warning: "bg-warning/15 text-warning",
-  danger: "bg-danger/15 text-danger",
-  info: "bg-primary/15 text-primary",
+  success: "bg-success/15 text-[color-mix(in_oklab,var(--success)_65%,var(--foreground))]",
+  warning: "bg-warning/15 text-[color-mix(in_oklab,var(--warning)_65%,var(--foreground))]",
+  danger: "bg-danger/15 text-[color-mix(in_oklab,var(--danger)_65%,var(--foreground))]",
+  info: "bg-link/15 text-[color-mix(in_oklab,var(--link)_65%,var(--foreground))]",
 };
 
 export type BadgeTone = keyof typeof tones;

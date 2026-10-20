@@ -11,12 +11,13 @@ export async function AuthFrame({ children }: { children: ReactNode }) {
     <div className="relative">
       {settings && (
         // On phones the name sits above the form; on wider screens it floats in the corner.
-        <div className="p-4 sm:absolute sm:left-0 sm:top-0 sm:p-6">
+        // A <header> landmark, so the logo isn't content outside every landmark (axe "region").
+        <header className="p-4 sm:absolute sm:left-0 sm:top-0 sm:p-6">
           <Logo
             name={settings.businessName}
             logoUrl={settings.logoFileId ? fileUrl(settings.logoFileId) : null}
           />
-        </div>
+        </header>
       )}
       {children}
     </div>
