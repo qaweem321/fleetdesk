@@ -28,7 +28,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return model
     ? {
         title: carModelName(model),
-        description: model.description ?? `Rent a ${carModelName(model)}.`,
+        description: model.description || `Rent a ${carModelName(model)}.`,
       }
     : {};
 }
