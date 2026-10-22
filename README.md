@@ -59,8 +59,15 @@ your business name, currency and time zone. The admin area then shows a **Get st
 checklist: add your locations, car models with prices, and vehicles.
 
 To try it with sample data instead, run `npm run db:seed` before opening the site: a business
-with a fleet, prices, rentals and these logins (password `fleetdesk-demo`):
-`owner@demo.test` (owner), `agent@demo.test` (counter agent), `customer@demo.test` (customer).
+with a fleet, prices, rentals and these logins:
+
+| Email | Password | Role |
+| --- | --- | --- |
+| `owner@demo.test` | `fleetdesk-demo` | Owner: everything |
+| `agent@demo.test` | `fleetdesk-demo` | Counter agent: pickups and returns |
+| `customer@demo.test` | `fleetdesk-demo` | Customer: bookings and account |
+
+These passwords are for local use only.
 
 ## Environment variables
 
