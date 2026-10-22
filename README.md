@@ -161,6 +161,29 @@ with the business rules in small, tested functions. `AGENTS.md` describes the st
 conventions, so AI coding tools (Claude Code, Cursor...) can extend it the same way. UI text is
 English; every visible string is in the page components.
 
+## Project structure
+
+```
+src/
+  app/              pages and API routes (Next.js App Router)
+    page.tsx, cars/, book/   public site: search, car pages, booking and payment
+    account/        customer area: bookings, driver details, settings
+    admin/          staff area: bookings, fleet, pricing, coupons, maintenance, reports, staff
+    setup/          first-run wizard: the first account becomes the owner
+    api/            login, the daily job (cron/) and the Stripe webhook
+    files/[id]/     serves uploaded photos and documents to people allowed to see them
+  components/       shared components; ui/ has Button, Input, SubmitButton, Skeleton
+  config/site.ts    name and branding
+  db/               database connection; schema/ per area, seed/ for the demo data
+  lib/              business rules, one folder per area (+ tests):
+                    bookings/ pricing/ payments/ operations/ drivers/ fleet/ maintenance/
+                    reports/ notifications/ storage/; auth, permissions, env checks, helpers
+  proxy.ts          sends logged-out visitors to log in
+drizzle/            database migrations
+Dockerfile, docker-compose.yml, deploy/Caddyfile   self-hosting with Docker
+vercel.json         runs the daily job on Vercel
+```
+
 ## Support
 
 Questions and bug reports are welcome as GitHub issues. Read this README and `AGENTS.md`
