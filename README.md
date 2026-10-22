@@ -78,14 +78,20 @@ missing.
 | --- | --- | --- |
 | `DATABASE_URL` | yes | Postgres connection string |
 | `DATABASE_DRIVER` | no | `neon` or `postgres`; guessed from the URL when empty |
-| `BETTER_AUTH_SECRET` | yes | Random string of 32+ characters for login sessions |
+| `BETTER_AUTH_SECRET` | yes | Random string of 32+ characters for login sessions (see the command below) |
 | `BETTER_AUTH_URL` | yes | Your site's address, like `https://rentals.example.com` |
 | `RESEND_API_KEY` | production | Sends emails (https://resend.com). Printed in the terminal in development |
 | `EMAIL_FROM` | no | Sender, on a domain verified in Resend |
-| `CRON_SECRET` | production | Protects the daily job (see below) |
+| `CRON_SECRET` | production | Random string of 16+ characters; protects the daily job (see below) |
 | `STORAGE_DRIVER` | no | Where photos go: `database` (default), `local` or `s3` |
 | `STORAGE_LOCAL_DIR`, `S3_*` | no | Settings for the `local` and `s3` storage |
 | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` | no | Online payments (see below) |
+
+Generate a `BETTER_AUTH_SECRET` (run it again for a separate `CRON_SECRET`):
+
+```bash
+node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
+```
 
 ### Online payments with Stripe (optional)
 
