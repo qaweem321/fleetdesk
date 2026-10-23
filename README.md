@@ -161,6 +161,9 @@ with the business rules in small, tested functions. `AGENTS.md` describes the st
 conventions, so AI coding tools (Claude Code, Cursor...) can extend it the same way. UI text is
 English; every visible string is in the page components.
 
+The reasoning behind the main design choices, with trade-offs, is in
+[docs/DECISIONS.md](docs/DECISIONS.md).
+
 ## Project structure
 
 ```
